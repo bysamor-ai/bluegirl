@@ -8,7 +8,7 @@ import { themes, themeIds } from "@/lib/themes";
 import { backgrounds, backgroundIds } from "@/lib/backgrounds";
 import MenuItemRow from "./MenuItemRow";
 
-/** 主表單：餐廳資料 + 動態菜式列表 + 生成圖片 + 儲存 */
+/** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
 export default function MenuForm() {
   const router = useRouter();
   const {
@@ -16,7 +16,7 @@ export default function MenuForm() {
     control,
     handleSubmit,
     getValues,
-    setValue,
+    watch,
     formState: { errors },
   } = useFormContext<RestaurantFormValues>();
 
@@ -27,69 +27,56 @@ export default function MenuForm() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
-  const [batchGenerating, setBatchGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [posterGenerating, setPosterGenerating] = useState(false);
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  const [posterError, setPosterError] = useState<string | null>(null);
 
-  /** 為單一菜式生成圖片（經伺服器 route 呼叫 fal.ai） */
-  async function generateForIndex(index: number): Promise<boolean> {
-    const item = getValues(`items.${index}`);
-    if (!item.name.trim()) {
-      setGenerateError(`第 ${index + 1} 項未有菜式名稱，無法生成圖片`);
-      return false;
+  const selectedBackground = watch("background");
+
+  /** 生成最終海報：用揀選咗嘅品牌背景做底，AI 合成餐廳名＋菜式＋價錢 */
+  async function generatePoster() {
+    const values = getValues();
+    const namedItems = values.items.filter((item) => item.name.trim());
+
+    if (values.background === "none") {
+      setPosterError("請先揀選一個品牌背景主題");
+      return;
+    }
+    if (!values.name.trim()) {
+      setPosterError("請先輸入餐廳名稱");
+      return;
+    }
+    if (namedItems.length === 0) {
+      setPosterError("請先加入最少一個有名稱嘅菜式");
+      return;
     }
 
-    setGenerateError(null);
-    setGeneratingIndex(index);
+    setPosterError(null);
+    setPosterGenerating(true);
     try {
-      const response = await fetch("/api/generate-image", {
+      const response = await fetch("/api/generate-poster", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          foodName: item.name,
-          restaurantName: getValues("name") || undefined,
-          restaurantId: getValues("id") || undefined,
-          menuItemId: item.id || undefined,
-          // 已有相片（上載到 Supabase Storage）→ 交俾 edit 模型執靚
-          referenceImageUrl: item.imageUrl || undefined,
+          restaurantName: values.name,
+          backgroundId: values.background,
+          restaurantId: values.id || undefined,
+          items: namedItems.map((item) => ({
+            name: item.name,
+            price: Number.isFinite(item.price) ? item.price : 0,
+            imageUrl: item.imageUrl || undefined,
+          })),
         }),
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error ?? "圖片生成失敗");
+        throw new Error(data.error ?? "海報生成失敗");
       }
-      setValue(`items.${index}.imageUrl`, data.imageUrl, {
-        shouldDirty: true,
-      });
-      return true;
+      setPosterUrl(data.imageUrl);
     } catch (e) {
-      setGenerateError(e instanceof Error ? e.message : "圖片生成失敗");
-      return false;
+      setPosterError(e instanceof Error ? e.message : "海報生成失敗");
     } finally {
-      setGeneratingIndex(null);
-    }
-  }
-
-  /** 一鍵為所有缺圖菜式生成圖片 */
-  async function generateMissingImages() {
-    const items = getValues("items");
-    const missing = items
-      .map((item, index) => ({ item, index }))
-      .filter(({ item }) => !item.imageUrl && item.name.trim());
-
-    if (missing.length === 0) {
-      setGenerateError("所有已命名嘅菜式都有圖片，毋須生成");
-      return;
-    }
-
-    setBatchGenerating(true);
-    try {
-      for (const { index } of missing) {
-        const ok = await generateForIndex(index);
-        if (!ok) break; // 出錯即停，避免連環失敗
-      }
-    } finally {
-      setBatchGenerating(false);
+      setPosterGenerating(false);
     }
   }
 
@@ -114,7 +101,7 @@ export default function MenuForm() {
     }
   });
 
-  const busy = saving || batchGenerating || generatingIndex !== null;
+  const busy = saving || posterGenerating;
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
@@ -166,24 +153,14 @@ export default function MenuForm() {
           <h2 className="text-base font-semibold">
             菜式（{fields.length} 項）
           </h2>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={generateMissingImages}
-              className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
-            >
-              {batchGenerating ? "生成緊圖片…" : "✨ 一鍵生成缺圖"}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => append({ name: "", price: 0, imageUrl: "" })}
-              className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
-            >
-              ＋ 新增菜式
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => append({ name: "", price: 0, imageUrl: "" })}
+            className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+          >
+            ＋ 新增菜式
+          </button>
         </div>
 
         {errors.items?.root && (
@@ -192,28 +169,21 @@ export default function MenuForm() {
         {typeof errors.items?.message === "string" && (
           <p className="text-xs text-red-600">{errors.items.message}</p>
         )}
-        {generateError && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
-            {generateError}
-          </p>
-        )}
 
         {fields.map((field, index) => (
           <MenuItemRow
             key={field.id}
             index={index}
             total={fields.length}
-            generating={generatingIndex === index}
             canRemove={fields.length > 1}
             onMoveUp={() => move(index, index - 1)}
             onMoveDown={() => move(index, index + 1)}
             onRemove={() => remove(index)}
-            onGenerate={() => generateForIndex(index)}
           />
         ))}
       </section>
 
-      {/* 背景主題（BLUE GIRL 品牌底圖） */}
+      {/* 背景主題（BLUE GIRL 品牌底圖）＋ AI 海報生成 */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
         <h2 className="mb-1 text-base font-semibold">背景主題</h2>
         <p className="mb-3 text-xs text-slate-400">
@@ -255,6 +225,48 @@ export default function MenuForm() {
             {errors.background.message}
           </p>
         )}
+
+        {/* AI 海報生成 */}
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <button
+            type="button"
+            disabled={busy || selectedBackground === "none"}
+            onClick={generatePoster}
+            className="w-full rounded-lg border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {posterGenerating
+              ? "生成緊海報…（約 30–60 秒）"
+              : "✨ Gen Image — 生成最終海報"}
+          </button>
+          <p className="mt-1.5 text-center text-xs text-slate-400">
+            {selectedBackground === "none"
+              ? "請先揀選一個品牌背景主題先可以生成"
+              : "用 fal.ai gpt-image-2 以你揀嘅背景做底，合成餐廳名、菜式同價錢"}
+          </p>
+          {posterError && (
+            <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+              {posterError}
+            </p>
+          )}
+          {posterUrl && (
+            <div className="mt-3 flex flex-col gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={posterUrl}
+                alt="AI 生成嘅最終海報"
+                className="w-full rounded-lg border border-slate-200"
+              />
+              <a
+                href={posterUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-center text-xs text-blue-600 underline hover:text-blue-800"
+              >
+                開新視窗睇原圖／下載
+              </a>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* 儲存 */}

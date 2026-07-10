@@ -10,6 +10,7 @@
 - 貨幣：港幣（HKD）格式
 - 4 個主題：經典傳統／簡約現代／尊貴深色／大膽促銷（config 喺 [src/lib/themes.ts](src/lib/themes.ts)，可直接修改）
 - 4 張 BLUE GIRL 品牌背景底圖（金啤橫向／金啤直向 Light／雙麥釀造橫向／雙麥釀造直向），圖片喺 `public/backgrounds/`，config 喺 [src/lib/backgrounds.ts](src/lib/backgrounds.ts)；揀咗背景後餐牌會轉用品牌版面（深藍字＋安全邊距避開品牌 footer）
+- **Gen Image 最終海報**：背景主題下面嘅按鈕，用 fal.ai `openai/gpt-image-2/edit` 以揀選咗嘅品牌背景做底，AI 合成餐廳名、菜式、價錢同已上載嘅菜式相成一張完整海報（route：[/api/generate-poster](src/app/api/generate-poster/route.ts)）
 
 ---
 

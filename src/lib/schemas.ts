@@ -42,3 +42,24 @@ export const generateImageSchema = z.object({
 });
 
 export type GenerateImageInput = z.infer<typeof generateImageSchema>;
+
+/** 最終海報生成 API request body（用揀選咗嘅品牌背景做底） */
+export const generatePosterSchema = z.object({
+  restaurantName: z.string().min(1, "請先輸入餐廳名稱").max(100),
+  backgroundId: z
+    .enum(backgroundIds)
+    .refine((v) => v !== "none", { message: "請先揀選一個品牌背景主題" }),
+  restaurantId: z.string().uuid().optional(),
+  items: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(100),
+        price: z.number().min(0),
+        imageUrl: z.string().url().optional().or(z.literal("")),
+      })
+    )
+    .min(1, "最少需要一個菜式")
+    .max(50),
+});
+
+export type GeneratePosterInput = z.infer<typeof generatePosterSchema>;

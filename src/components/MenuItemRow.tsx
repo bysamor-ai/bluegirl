@@ -8,24 +8,20 @@ import { uploadFoodImage } from "@/lib/supabase/client";
 interface MenuItemRowProps {
   index: number;
   total: number;
-  generating: boolean;
   canRemove: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
-  onGenerate: () => void;
 }
 
-/** 單個菜式編輯列：相片（上載／AI 生成）、名稱、價錢、排序、移除 */
+/** 單個菜式編輯列：相片上載、名稱、價錢、排序、移除 */
 export default function MenuItemRow({
   index,
   total,
-  generating,
   canRemove,
   onMoveUp,
   onMoveDown,
   onRemove,
-  onGenerate,
 }: MenuItemRowProps) {
   const {
     register,
@@ -87,29 +83,14 @@ export default function MenuItemRow({
             className="hidden"
             onChange={handleFileChange}
           />
-          <div className="flex gap-1">
-            <button
-              type="button"
-              className={btn}
-              disabled={uploading || generating}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploading ? "上傳中…" : "上載相片"}
-            </button>
-            <button
-              type="button"
-              className={`${btn} border-blue-300 text-blue-600 hover:bg-blue-50`}
-              disabled={uploading || generating}
-              onClick={onGenerate}
-              title={
-                imageUrl
-                  ? "用 AI 將已上載嘅相片執靚做餐牌相"
-                  : "用 AI 生成菜式相片"
-              }
-            >
-              {generating ? "生成中…" : imageUrl ? "AI 執靚" : "AI 生成"}
-            </button>
-          </div>
+          <button
+            type="button"
+            className={btn}
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? "上傳中…" : "上載相片"}
+          </button>
           {imageUrl && (
             <button
               type="button"
