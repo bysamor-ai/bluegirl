@@ -101,9 +101,13 @@ export default function MenuItemRow({
               className={`${btn} border-blue-300 text-blue-600 hover:bg-blue-50`}
               disabled={uploading || generating}
               onClick={onGenerate}
-              title="用 AI 生成菜式相片"
+              title={
+                imageUrl
+                  ? "用 AI 將已上載嘅相片執靚做餐牌相"
+                  : "用 AI 生成菜式相片"
+              }
             >
-              {generating ? "生成中…" : "AI 生成"}
+              {generating ? "生成中…" : imageUrl ? "AI 執靚" : "AI 生成"}
             </button>
           </div>
           {imageUrl && (

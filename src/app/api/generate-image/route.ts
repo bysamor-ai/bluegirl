@@ -6,9 +6,9 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // 圖片生成需時，放寬 Vercel function 時限
 
-// 預設用 GPT Image 2 text-to-image（注意：openai/gpt-image-2/edit 係
-// image-to-image，必須提供 image_urls，唔適用於「由零生成缺圖」）
+// 無參考圖：text-to-image 由零生成；有參考圖（上載咗相）：edit 模型執靚張相
 const DEFAULT_MODEL = "openai/gpt-image-2";
+const DEFAULT_EDIT_MODEL = "openai/gpt-image-2/edit";
 
 interface FalImageOutput {
   images?: Array<{ url?: string }>;
@@ -42,15 +42,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { foodName, restaurantName, restaurantId, menuItemId } = parsed.data;
-  const model = process.env.FAL_IMAGE_MODEL || DEFAULT_MODEL;
+  const { foodName, restaurantName, restaurantId, menuItemId, referenceImageUrl } =
+    parsed.data;
+
+  // 有參考圖（例如 Supabase Storage 公開 URL）→ edit 模型；無 → text-to-image
+  const model = referenceImageUrl
+    ? process.env.FAL_EDIT_MODEL || DEFAULT_EDIT_MODEL
+    : process.env.FAL_IMAGE_MODEL || DEFAULT_MODEL;
 
   // 用英文 prompt 生成質素較穩定，菜式名稱保留原文
-  const prompt =
-    `Professional food photography of "${foodName}", a dish served at a Hong Kong restaurant` +
-    (restaurantName ? ` called "${restaurantName}"` : "") +
-    `. Appetizing close-up on a clean plate, soft natural lighting, ` +
-    `shallow depth of field, restaurant menu style photo, no text or watermark.`;
+  const prompt = referenceImageUrl
+    ? `Turn this photo of "${foodName}" into a professional restaurant menu photo: ` +
+      `appetizing close-up on a clean plate, soft natural lighting, clean background, ` +
+      `keep the dish itself unchanged, no text or watermark.`
+    : `Professional food photography of "${foodName}", a dish served at a Hong Kong restaurant` +
+      (restaurantName ? ` called "${restaurantName}"` : "") +
+      `. Appetizing close-up on a clean plate, soft natural lighting, ` +
+      `shallow depth of field, restaurant menu style photo, no text or watermark.`;
 
   try {
     fal.config({ credentials: falKey });
@@ -61,6 +69,7 @@ export async function POST(request: NextRequest) {
         prompt,
         quality: "medium",
         num_images: 1,
+        ...(referenceImageUrl ? { image_urls: [referenceImageUrl] } : {}),
       },
     });
 

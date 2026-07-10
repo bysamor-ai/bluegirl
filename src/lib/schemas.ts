@@ -37,6 +37,8 @@ export const generateImageSchema = z.object({
   restaurantName: z.string().max(100).optional(),
   restaurantId: z.string().uuid().optional(),
   menuItemId: z.string().uuid().optional(),
+  /** 有參考圖（例如已上載嘅 Supabase Storage 相片）時用 edit 模型執靚佢 */
+  referenceImageUrl: z.string().url().optional(),
 });
 
 export type GenerateImageInput = z.infer<typeof generateImageSchema>;

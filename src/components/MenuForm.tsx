@@ -50,6 +50,8 @@ export default function MenuForm() {
           restaurantName: getValues("name") || undefined,
           restaurantId: getValues("id") || undefined,
           menuItemId: item.id || undefined,
+          // 已有相片（上載到 Supabase Storage）→ 交俾 edit 模型執靚
+          referenceImageUrl: item.imageUrl || undefined,
         }),
       });
       const data = await response.json();
