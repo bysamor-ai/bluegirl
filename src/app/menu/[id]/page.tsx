@@ -21,7 +21,7 @@ export default async function MenuPage({
     const supabase = getSupabaseServerClient();
     const { data } = await supabase
       .from("restaurants")
-      .select("id, name, theme, created_at, menu_items(*)")
+      .select("id, name, theme, background, created_at, menu_items(*)")
       .eq("id", id)
       .order("sort_order", { referencedTable: "menu_items", ascending: true })
       .single();
@@ -58,6 +58,7 @@ export default async function MenuPage({
       <MenuPreview
         name={restaurant.name}
         theme={restaurant.theme}
+        background={restaurant.background ?? "none"}
         items={items}
       />
     </div>

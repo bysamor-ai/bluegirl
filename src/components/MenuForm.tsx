@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
 import { themes, themeIds } from "@/lib/themes";
+import { backgrounds, backgroundIds } from "@/lib/backgrounds";
 import MenuItemRow from "./MenuItemRow";
 
 /** 主表單：餐廳資料 + 動態菜式列表 + 生成圖片 + 儲存 */
@@ -208,6 +209,50 @@ export default function MenuForm() {
             onGenerate={() => generateForIndex(index)}
           />
         ))}
+      </section>
+
+      {/* 背景主題（BLUE GIRL 品牌底圖） */}
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+        <h2 className="mb-1 text-base font-semibold">背景主題</h2>
+        <p className="mb-3 text-xs text-slate-400">
+          揀選 BLUE GIRL 品牌底圖後，餐牌會轉用品牌版面；揀「無背景」則用返上面嘅主題色
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+          {backgroundIds.map((id) => {
+            const bg = backgrounds[id];
+            return (
+              <label
+                key={id}
+                className="flex cursor-pointer flex-col gap-1.5 rounded-lg border border-slate-200 p-2 text-xs has-checked:border-blue-500 has-checked:ring-2 has-checked:ring-blue-200"
+              >
+                <input
+                  type="radio"
+                  value={id}
+                  className="sr-only"
+                  {...register("background")}
+                />
+                {bg.src ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={bg.src}
+                    alt={bg.label}
+                    className="h-16 w-full rounded object-cover"
+                  />
+                ) : (
+                  <span className="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-slate-400">
+                    無背景
+                  </span>
+                )}
+                <span className="font-medium">{bg.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        {errors.background && (
+          <p className="mt-1 text-xs text-red-600">
+            {errors.background.message}
+          </p>
+        )}
       </section>
 
       {/* 儲存 */}

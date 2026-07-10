@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { themeIds } from "./themes";
+import { backgroundIds } from "./backgrounds";
 
 /** 單個菜式（表單 + API 共用） */
 export const menuItemSchema = z.object({
@@ -18,6 +19,9 @@ export const restaurantFormSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1, "請輸入餐廳名稱").max(100, "餐廳名稱過長"),
   theme: z.enum(themeIds, { errorMap: () => ({ message: "請選擇主題" }) }),
+  background: z.enum(backgroundIds, {
+    errorMap: () => ({ message: "請選擇背景主題" }),
+  }),
   items: z
     .array(menuItemSchema)
     .min(1, "最少需要一個菜式")

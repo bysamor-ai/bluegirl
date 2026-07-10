@@ -9,6 +9,7 @@ import MenuPreview from "./MenuPreview";
 const EMPTY_FORM: RestaurantFormValues = {
   name: "",
   theme: "classic",
+  background: "none",
   items: [{ name: "", price: 0, imageUrl: "" }],
 };
 
@@ -25,6 +26,7 @@ function LivePreview() {
     <MenuPreview
       name={values.name ?? ""}
       theme={values.theme ?? "classic"}
+      background={values.background ?? "none"}
       items={items}
     />
   );

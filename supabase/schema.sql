@@ -10,8 +10,14 @@ create table if not exists public.restaurants (
   name text not null,
   theme text not null default 'classic'
     check (theme in ('classic', 'minimal', 'dark', 'promo')),
+  background text not null default 'none'
+    check (background in ('none', 'gold-landscape', 'gold-portrait', 'white-landscape', 'white-portrait')),
   created_at timestamptz not null default now()
 );
+
+-- 由舊版 schema 升級用（新裝可略過，重覆執行冇影響）
+alter table public.restaurants
+  add column if not exists background text not null default 'none';
 
 create table if not exists public.menu_items (
   id uuid primary key default gen_random_uuid(),

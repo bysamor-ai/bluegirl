@@ -47,14 +47,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = getSupabaseServerClient();
-    const { id, name, theme, items } = parsed.data;
+    const { id, name, theme, background, items } = parsed.data;
     let restaurantId = id;
 
     if (restaurantId) {
       // 更新現有記錄
       const { error } = await supabase
         .from("restaurants")
-        .update({ name, theme })
+        .update({ name, theme, background })
         .eq("id", restaurantId);
       if (error) throw new Error(`更新餐廳失敗：${error.message}`);
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     } else {
       const { data, error } = await supabase
         .from("restaurants")
-        .insert({ name, theme })
+        .insert({ name, theme, background })
         .select("id")
         .single();
       if (error || !data) {

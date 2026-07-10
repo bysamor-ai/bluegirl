@@ -1,4 +1,5 @@
 import type { ThemeId } from "./themes";
+import type { BackgroundId } from "./backgrounds";
 
 /** Supabase 資料表 row types */
 
@@ -6,6 +7,7 @@ export interface RestaurantRow {
   id: string;
   name: string;
   theme: ThemeId;
+  background: BackgroundId;
   created_at: string;
 }
 
