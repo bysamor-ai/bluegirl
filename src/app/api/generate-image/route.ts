@@ -6,7 +6,9 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // 圖片生成需時，放寬 Vercel function 時限
 
-const DEFAULT_MODEL = "fal-ai/gpt-image-1/text-to-image";
+// 預設用 GPT Image 2 text-to-image（注意：openai/gpt-image-2/edit 係
+// image-to-image，必須提供 image_urls，唔適用於「由零生成缺圖」）
+const DEFAULT_MODEL = "openai/gpt-image-2";
 
 interface FalImageOutput {
   images?: Array<{ url?: string }>;
@@ -53,10 +55,10 @@ export async function POST(request: NextRequest) {
   try {
     fal.config({ credentials: falKey });
 
+    // 只傳各 GPT Image 模型都通用嘅參數（image_size enum 每個模型唔同，留 auto）
     const result = await fal.subscribe(model, {
       input: {
         prompt,
-        image_size: "1024x1024",
         quality: "medium",
         num_images: 1,
       },
