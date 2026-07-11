@@ -112,7 +112,14 @@ export default function MenuForm() {
       }
       setPosterUrl(data.imageUrl);
     } catch (e) {
-      setPosterError(e instanceof Error ? e.message : "海報生成失敗");
+      // fetch 被中斷（例如 function 超時）會拋 "Failed to fetch"
+      const message =
+        e instanceof TypeError
+          ? "生成時間過長或網絡中斷，請再撳一次重試"
+          : e instanceof Error
+            ? e.message
+            : "海報生成失敗";
+      setPosterError(message);
     } finally {
       setPosterGenerating(false);
     }
@@ -286,7 +293,7 @@ export default function MenuForm() {
           <p className="mt-1.5 text-center text-xs text-slate-400">
             {selectedBackground === "none"
               ? "請先揀選一個品牌背景主題先可以生成"
-              : "用 fal.ai gpt-image-2 以你揀嘅背景做底，合成餐廳名、菜式同價錢"}
+              : "用 fal.ai gpt-image-2 以你揀嘅背景做底，合成餐廳名、菜式同價錢（需時約 1–2 分鐘）"}
           </p>
           {posterError && (
             <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">

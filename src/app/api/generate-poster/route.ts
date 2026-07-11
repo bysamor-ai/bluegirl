@@ -6,7 +6,8 @@ import { formatHKD } from "@/lib/format";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // 海報生成需時，放寬 Vercel function 時限
+// 海報生成成日超過 60 秒；Fluid Compute 下 Hobby plan 都支援到 300 秒
+export const maxDuration = 300;
 
 const DEFAULT_POSTER_MODEL = "openai/gpt-image-2/edit";
 // 除背景外最多附帶嘅菜式相數量（避免 image_urls 過長）
@@ -100,7 +101,8 @@ export async function POST(request: NextRequest) {
         prompt,
         image_urls: [bgUrl, ...dishImages],
         image_size: bg.posterSize,
-        quality: "high",
+        // medium 快 high 一倍左右，避免撞 function 時限
+        quality: "medium",
         num_images: 1,
       },
     });
