@@ -50,15 +50,17 @@ export async function POST(request: NextRequest) {
     ? process.env.FAL_EDIT_MODEL || DEFAULT_EDIT_MODEL
     : process.env.FAL_IMAGE_MODEL || DEFAULT_MODEL;
 
-  // 用英文 prompt 生成質素較穩定，菜式名稱保留原文
+  // 用英文 prompt 生成質素較穩定，菜式名稱保留原文；
+  // 所有菜式圖一律純白背景（方便餐牌排版）
   const prompt = referenceImageUrl
     ? `Turn this photo of "${foodName}" into a professional restaurant menu photo: ` +
-      `appetizing close-up on a clean plate, soft natural lighting, clean background, ` +
-      `keep the dish itself unchanged, no text or watermark.`
+      `appetizing close-up on a clean plate, isolated on a pure white background (#ffffff), ` +
+      `soft studio lighting, keep the dish itself unchanged, no text or watermark.`
     : `Professional food photography of "${foodName}", a dish served at a Hong Kong restaurant` +
       (restaurantName ? ` called "${restaurantName}"` : "") +
-      `. Appetizing close-up on a clean plate, soft natural lighting, ` +
-      `shallow depth of field, restaurant menu style photo, no text or watermark.`;
+      `. Appetizing close-up on a clean plate, isolated on a pure white background (#ffffff), ` +
+      `soft studio lighting, restaurant menu style photo, no shadows on the background edges, ` +
+      `no text or watermark.`;
 
   try {
     fal.config({ credentials: falKey });

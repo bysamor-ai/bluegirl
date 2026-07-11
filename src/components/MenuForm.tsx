@@ -16,6 +16,7 @@ export default function MenuForm() {
     control,
     handleSubmit,
     getValues,
+    setValue,
     watch,
     formState: { errors },
   } = useFormContext<RestaurantFormValues>();
@@ -30,8 +31,45 @@ export default function MenuForm() {
   const [posterGenerating, setPosterGenerating] = useState(false);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [posterError, setPosterError] = useState<string | null>(null);
+  const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const selectedBackground = watch("background");
+
+  /** 為單一菜式生成相片（text-to-image，白色背景） */
+  async function generateForIndex(index: number) {
+    const item = getValues(`items.${index}`);
+    if (!item.name.trim()) {
+      setGenerateError(`第 ${index + 1} 項未有菜式名稱，無法生成圖片`);
+      return;
+    }
+
+    setGenerateError(null);
+    setGeneratingIndex(index);
+    try {
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          foodName: item.name,
+          restaurantName: getValues("name") || undefined,
+          restaurantId: getValues("id") || undefined,
+          menuItemId: item.id || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "圖片生成失敗");
+      }
+      setValue(`items.${index}.imageUrl`, data.imageUrl, {
+        shouldDirty: true,
+      });
+    } catch (e) {
+      setGenerateError(e instanceof Error ? e.message : "圖片生成失敗");
+    } finally {
+      setGeneratingIndex(null);
+    }
+  }
 
   /** 生成最終海報：用揀選咗嘅品牌背景做底，AI 合成餐廳名＋菜式＋價錢 */
   async function generatePoster() {
@@ -101,7 +139,7 @@ export default function MenuForm() {
     }
   });
 
-  const busy = saving || posterGenerating;
+  const busy = saving || posterGenerating || generatingIndex !== null;
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
@@ -169,16 +207,23 @@ export default function MenuForm() {
         {typeof errors.items?.message === "string" && (
           <p className="text-xs text-red-600">{errors.items.message}</p>
         )}
+        {generateError && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+            {generateError}
+          </p>
+        )}
 
         {fields.map((field, index) => (
           <MenuItemRow
             key={field.id}
             index={index}
             total={fields.length}
+            generating={generatingIndex === index}
             canRemove={fields.length > 1}
             onMoveUp={() => move(index, index - 1)}
             onMoveDown={() => move(index, index + 1)}
             onRemove={() => remove(index)}
+            onGenerate={() => generateForIndex(index)}
           />
         ))}
       </section>
