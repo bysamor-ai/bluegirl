@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fal } from "@fal-ai/client";
 import { generatePosterSchema } from "@/lib/schemas";
 import { getBackground } from "@/lib/backgrounds";
+import { getPosterStyle } from "@/lib/posterStyles";
 import { formatHKD } from "@/lib/format";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -47,8 +48,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { restaurantName, backgroundId, restaurantId, items } = parsed.data;
+  const { restaurantName, backgroundId, styleId, restaurantId, items } =
+    parsed.data;
   const bg = getBackground(backgroundId);
+  const style = getPosterStyle(styleId);
   if (!bg.src) {
     return NextResponse.json(
       { error: "請先揀選一個品牌背景主題" },
@@ -61,17 +64,24 @@ export async function POST(request: NextRequest) {
   try {
     fal.config({ credentials: falKey });
 
-    // 由自己個 deployment 讀取背景圖，上傳去 fal storage
+    // 由自己個 deployment 讀取背景圖同風格參考圖，上傳去 fal storage
     // （本機 localhost fal 讀唔到，所以唔可以直接俾 URL 佢）
     const origin = new URL(request.url).origin;
-    const bgResponse = await fetch(`${origin}${bg.src}`);
-    if (!bgResponse.ok) {
-      throw new Error(`讀取背景圖失敗（${bgResponse.status}）`);
-    }
-    const bgBuffer = await bgResponse.arrayBuffer();
-    const bgUrl = await fal.storage.upload(
-      new File([bgBuffer], "background.jpg", { type: "image/jpeg" })
-    );
+    const uploadLocalImage = async (src: string, name: string) => {
+      const response = await fetch(`${origin}${src}`);
+      if (!response.ok) {
+        throw new Error(`讀取 ${src} 失敗（${response.status}）`);
+      }
+      const buffer = await response.arrayBuffer();
+      return fal.storage.upload(
+        new File([buffer], name, { type: "image/jpeg" })
+      );
+    };
+
+    const [bgUrl, styleUrl] = await Promise.all([
+      uploadLocalImage(bg.src, "background.jpg"),
+      uploadLocalImage(style.src, "style-reference.jpg"),
+    ]);
 
     // 菜式相（已係公開 URL：Supabase Storage / fal.media）
     const dishImages = items
@@ -84,22 +94,27 @@ export async function POST(request: NextRequest) {
       .join("\n");
 
     const prompt =
-      `The first image is an official BLUE GIRL beer restaurant menu poster background template. ` +
-      `Create the final menu poster using this EXACT background — keep its layout, colors, logos, ` +
-      `bottle artwork and bottom brand footer completely unchanged. ` +
-      `In the empty area, add the restaurant name "${restaurantName}" as an elegant centered title ` +
-      `in deep navy (#1e2a63), then list these menu items with prices in clean, readable ` +
-      `Traditional Chinese typography (dish name left, price right):\n${menuLines}\n` +
+      `Design a professional restaurant menu poster.\n` +
+      `Image 1 is the official BLUE GIRL beer poster background template — use it as the EXACT ` +
+      `canvas: keep its colors, logos, bottle artwork and bottom brand footer completely unchanged, ` +
+      `and design all menu content within its empty area.\n` +
+      `Image 2 is a DESIGN STYLE reference only — imitate its layout language, composition, ` +
+      `dish presentation (${style.styleHint}), typography feel and price display style, ` +
+      `but do NOT copy its text, dishes, logos or colors that clash with the background.\n` +
+      `Menu content — restaurant name "${restaurantName}" as the title, then these dishes with prices ` +
+      `in clean, readable Traditional Chinese typography:\n${menuLines}\n` +
       (dishImages.length > 0
-        ? `The remaining ${dishImages.length} image(s) are photos of the dishes — place them as small ` +
-          `rounded photos next to their matching menu lines. `
-        : "") +
-      `Do not cover the bottom brand footer or the bottle. Do not add any other text or watermark.`;
+        ? `The remaining ${dishImages.length} image(s) are the actual dish photos — feature them ` +
+          `beautifully plated in the layout next to their matching names. ` +
+          `Generate appetizing plated photos for any dish without a photo, matching the same style. `
+        : `Generate an appetizing plated photo for each dish in the same presentation style. `) +
+      `All text must be legible and accurate. Do not cover the bottom brand footer or the bottle. ` +
+      `Do not add any other text or watermark.`;
 
     const result = await fal.subscribe(model, {
       input: {
         prompt,
-        image_urls: [bgUrl, ...dishImages],
+        image_urls: [bgUrl, styleUrl, ...dishImages],
         image_size: bg.posterSize,
         // medium 快 high 一倍左右，避免撞 function 時限
         quality: "medium",

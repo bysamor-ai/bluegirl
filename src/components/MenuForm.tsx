@@ -6,6 +6,11 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
 import { themes, themeIds } from "@/lib/themes";
 import { backgrounds, backgroundIds } from "@/lib/backgrounds";
+import {
+  posterStyles,
+  posterStyleIds,
+  type PosterStyleId,
+} from "@/lib/posterStyles";
 import MenuItemRow from "./MenuItemRow";
 
 /** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
@@ -33,6 +38,7 @@ export default function MenuForm() {
   const [posterError, setPosterError] = useState<string | null>(null);
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [posterStyle, setPosterStyle] = useState<PosterStyleId>("grid-minimal");
 
   const selectedBackground = watch("background");
 
@@ -98,6 +104,7 @@ export default function MenuForm() {
         body: JSON.stringify({
           restaurantName: values.name,
           backgroundId: values.background,
+          styleId: posterStyle,
           restaurantId: values.id || undefined,
           items: namedItems.map((item) => ({
             name: item.name,
@@ -280,6 +287,40 @@ export default function MenuForm() {
 
         {/* AI 海報生成 */}
         <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="mb-2 text-xs font-medium text-slate-500">
+            海報設計風格（AI 會參考排版、構圖同價錢展示方式）
+          </p>
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {posterStyleIds.map((id) => {
+              const s = posterStyles[id];
+              return (
+                <label
+                  key={id}
+                  className={`flex cursor-pointer flex-col gap-1.5 rounded-lg border p-2 text-xs ${
+                    posterStyle === id
+                      ? "border-blue-500 ring-2 ring-blue-200"
+                      : "border-slate-200"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="posterStyle"
+                    value={id}
+                    checked={posterStyle === id}
+                    onChange={() => setPosterStyle(id)}
+                    className="sr-only"
+                  />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={s.src}
+                    alt={s.label}
+                    className="h-20 w-full rounded object-cover object-top"
+                  />
+                  <span className="font-medium">{s.label}</span>
+                </label>
+              );
+            })}
+          </div>
           <button
             type="button"
             disabled={busy || selectedBackground === "none"}

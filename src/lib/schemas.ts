@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { themeIds } from "./themes";
 import { backgroundIds } from "./backgrounds";
+import { posterStyleIds } from "./posterStyles";
 
 /** 單個菜式（表單 + API 共用） */
 export const menuItemSchema = z.object({
@@ -49,6 +50,7 @@ export const generatePosterSchema = z.object({
   backgroundId: z
     .enum(backgroundIds)
     .refine((v) => v !== "none", { message: "請先揀選一個品牌背景主題" }),
+  styleId: z.enum(posterStyleIds).default("grid-minimal"),
   restaurantId: z.string().uuid().optional(),
   items: z
     .array(
