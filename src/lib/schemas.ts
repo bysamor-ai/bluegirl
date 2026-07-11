@@ -23,6 +23,8 @@ export const restaurantFormSchema = z.object({
   background: z.enum(backgroundIds, {
     errorMap: () => ({ message: "請選擇背景主題" }),
   }),
+  /** AI 生成嘅最終海報 URL（會隨記錄儲存） */
+  posterUrl: z.string().url("海報網址格式不正確").or(z.literal("")),
   items: z
     .array(menuItemSchema)
     .min(1, "最少需要一個菜式")

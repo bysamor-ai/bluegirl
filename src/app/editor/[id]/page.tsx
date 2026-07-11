@@ -20,7 +20,7 @@ export default async function EditEditorPage({
     const supabase = getSupabaseServerClient();
     const { data } = await supabase
       .from("restaurants")
-      .select("id, name, theme, background, created_at, menu_items(*)")
+      .select("id, name, theme, background, poster_url, created_at, menu_items(*)")
       .eq("id", id)
       .order("sort_order", { referencedTable: "menu_items", ascending: true })
       .single();
@@ -36,6 +36,7 @@ export default async function EditEditorPage({
     name: restaurant.name,
     theme: restaurant.theme,
     background: restaurant.background ?? "none",
+    posterUrl: restaurant.poster_url ?? "",
     items: restaurant.menu_items.map((item) => ({
       id: item.id,
       name: item.name,

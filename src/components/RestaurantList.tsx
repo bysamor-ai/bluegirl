@@ -72,11 +72,24 @@ export default function RestaurantList({
             key={row.id}
             className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center"
           >
-            <span className={`h-8 w-8 shrink-0 rounded-lg ${theme.swatch}`} />
+            {row.poster_url ? (
+              // 有最終海報 → 顯示海報縮圖
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={row.poster_url}
+                alt={`${row.name} 海報縮圖`}
+                className="h-14 w-14 shrink-0 rounded-lg border border-slate-200 object-cover object-top"
+              />
+            ) : (
+              <span
+                className={`h-8 w-8 shrink-0 rounded-lg ${theme.swatch}`}
+              />
+            )}
             <div className="min-w-0 grow">
               <p className="truncate font-semibold">{row.name}</p>
               <p className="text-xs text-slate-400">
-                主題：{theme.label}・建立於 {formatDate(row.created_at)}
+                {row.poster_url ? "已有 AI 海報・" : ""}建立於{" "}
+                {formatDate(row.created_at)}
               </p>
             </div>
             <div className="flex shrink-0 gap-2 text-sm">

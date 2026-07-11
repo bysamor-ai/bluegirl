@@ -8,6 +8,7 @@ export interface RestaurantRow {
   name: string;
   theme: ThemeId;
   background: BackgroundId;
+  poster_url: string | null;
   created_at: string;
 }
 

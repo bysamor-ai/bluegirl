@@ -21,7 +21,7 @@ export default async function MenuPage({
     const supabase = getSupabaseServerClient();
     const { data } = await supabase
       .from("restaurants")
-      .select("id, name, theme, background, created_at, menu_items(*)")
+      .select("id, name, theme, background, poster_url, created_at, menu_items(*)")
       .eq("id", id)
       .order("sort_order", { referencedTable: "menu_items", ascending: true })
       .single();
@@ -55,12 +55,22 @@ export default async function MenuPage({
         </div>
       </div>
 
-      <MenuPreview
-        name={restaurant.name}
-        theme={restaurant.theme}
-        background={restaurant.background ?? "none"}
-        items={items}
-      />
+      {restaurant.poster_url ? (
+        // 有 AI 生成嘅最終海報 → 直接展示張海報
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={restaurant.poster_url}
+          alt={`${restaurant.name} 餐牌海報`}
+          className="w-full rounded-xl border border-slate-200 shadow-sm"
+        />
+      ) : (
+        <MenuPreview
+          name={restaurant.name}
+          theme={restaurant.theme}
+          background={restaurant.background ?? "none"}
+          items={items}
+        />
+      )}
     </div>
   );
 }

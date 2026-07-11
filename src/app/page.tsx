@@ -14,7 +14,7 @@ export default async function HomePage() {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
       .from("restaurants")
-      .select("id, name, theme, created_at")
+      .select("id, name, theme, background, poster_url, created_at")
       .order("created_at", { ascending: false });
     if (error) {
       loadError = `讀取記錄失敗：${error.message}`;

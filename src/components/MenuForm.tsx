@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
-import { themes, themeIds } from "@/lib/themes";
 import { backgrounds, backgroundIds } from "@/lib/backgrounds";
 import {
   posterStyles,
@@ -34,13 +33,14 @@ export default function MenuForm() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [posterGenerating, setPosterGenerating] = useState(false);
-  const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [posterError, setPosterError] = useState<string | null>(null);
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [posterStyle, setPosterStyle] = useState<PosterStyleId>("grid-minimal");
 
   const selectedBackground = watch("background");
+  // 海報係表單值嘅一部分：生成後隨記錄儲存，編輯舊記錄時會顯示返出嚟
+  const posterUrl = watch("posterUrl");
 
   /** 為單一菜式生成相片（text-to-image，白色背景） */
   async function generateForIndex(index: number) {
@@ -117,7 +117,7 @@ export default function MenuForm() {
       if (!response.ok) {
         throw new Error(data.error ?? "海報生成失敗");
       }
-      setPosterUrl(data.imageUrl);
+      setValue("posterUrl", data.imageUrl, { shouldDirty: true });
     } catch (e) {
       // fetch 被中斷（例如 function 超時）會拋 "Failed to fetch"
       const message =
@@ -171,31 +171,6 @@ export default function MenuForm() {
         />
         {errors.name && (
           <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
-        )}
-
-        <p className="mt-4 mb-2 text-xs font-medium text-slate-500">選擇主題</p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {themeIds.map((id) => {
-            const t = themes[id];
-            return (
-              <label
-                key={id}
-                className="flex cursor-pointer flex-col gap-1.5 rounded-lg border border-slate-200 p-2.5 text-sm has-checked:border-blue-500 has-checked:ring-2 has-checked:ring-blue-200"
-              >
-                <input
-                  type="radio"
-                  value={id}
-                  className="sr-only"
-                  {...register("theme")}
-                />
-                <span className={`h-6 w-full rounded ${t.swatch}`} />
-                <span className="font-medium">{t.label}</span>
-              </label>
-            );
-          })}
-        </div>
-        {errors.theme && (
-          <p className="mt-1 text-xs text-red-600">{errors.theme.message}</p>
         )}
       </section>
 
@@ -343,20 +318,34 @@ export default function MenuForm() {
           )}
           {posterUrl && (
             <div className="mt-3 flex flex-col gap-2">
+              <p className="text-xs font-medium text-slate-500">
+                最終海報（撳「儲存餐牌」會一併儲存落記錄）
+              </p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={posterUrl}
                 alt="AI 生成嘅最終海報"
                 className="w-full rounded-lg border border-slate-200"
               />
-              <a
-                href={posterUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-center text-xs text-blue-600 underline hover:text-blue-800"
-              >
-                開新視窗睇原圖／下載
-              </a>
+              <div className="flex items-center justify-center gap-4 text-xs">
+                <a
+                  href={posterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800"
+                >
+                  開新視窗睇原圖／下載
+                </a>
+                <button
+                  type="button"
+                  className="text-slate-400 underline hover:text-red-500"
+                  onClick={() =>
+                    setValue("posterUrl", "", { shouldDirty: true })
+                  }
+                >
+                  清除海報
+                </button>
+              </div>
             </div>
           )}
         </div>

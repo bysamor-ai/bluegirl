@@ -10,7 +10,7 @@ export async function GET() {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
       .from("restaurants")
-      .select("id, name, theme, created_at")
+      .select("id, name, theme, background, poster_url, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -47,14 +47,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = getSupabaseServerClient();
-    const { id, name, theme, background, items } = parsed.data;
+    const { id, name, theme, background, posterUrl, items } = parsed.data;
     let restaurantId = id;
 
     if (restaurantId) {
       // 更新現有記錄
       const { error } = await supabase
         .from("restaurants")
-        .update({ name, theme, background })
+        .update({ name, theme, background, poster_url: posterUrl || null })
         .eq("id", restaurantId);
       if (error) throw new Error(`更新餐廳失敗：${error.message}`);
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     } else {
       const { data, error } = await supabase
         .from("restaurants")
-        .insert({ name, theme, background })
+        .insert({ name, theme, background, poster_url: posterUrl || null })
         .select("id")
         .single();
       if (error || !data) {
