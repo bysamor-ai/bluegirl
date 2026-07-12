@@ -6,7 +6,6 @@
  */
 
 export const posterStyleIds = [
-  "grid-minimal",
   "chinese-elegant",
   "festive-gold",
   "bold-red",
@@ -25,14 +24,6 @@ export interface PosterStyleConfig {
 }
 
 export const posterStyles: Record<PosterStyleId, PosterStyleConfig> = {
-  "grid-minimal": {
-    id: "grid-minimal",
-    label: "簡約格仔",
-    styleHint:
-      "clean minimal grid layout, each dish on a white plate photographed top-down " +
-      "in its own card cell, generous whitespace, thin elegant typography",
-    src: "/poster-styles/grid-minimal.jpg",
-  },
   "chinese-elegant": {
     id: "chinese-elegant",
     label: "雅致中式",
@@ -63,7 +54,14 @@ export function getPosterStyle(
   id: string | null | undefined
 ): PosterStyleConfig {
   return (
-    posterStyles[(id as PosterStyleId) ?? "grid-minimal"] ??
-    posterStyles["grid-minimal"]
+    posterStyles[(id as PosterStyleId) ?? "chinese-elegant"] ??
+    posterStyles["chinese-elegant"]
   );
+}
+
+/** 每次生成隨機揀一款設計風格 */
+export function randomPosterStyle(): PosterStyleConfig {
+  const id =
+    posterStyleIds[Math.floor(Math.random() * posterStyleIds.length)];
+  return posterStyles[id];
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fal } from "@fal-ai/client";
 import { generatePosterSchema } from "@/lib/schemas";
 import { getBackground } from "@/lib/backgrounds";
-import { getPosterStyle } from "@/lib/posterStyles";
+import { getPosterStyle, randomPosterStyle } from "@/lib/posterStyles";
 import { formatHKD } from "@/lib/format";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
   const { restaurantName, backgroundId, styleId, restaurantId, items } =
     parsed.data;
   const bg = getBackground(backgroundId);
-  const style = getPosterStyle(styleId);
+  // 冇指定風格就隨機揀一款（UI 已隱藏風格揀選器）
+  const style = styleId ? getPosterStyle(styleId) : randomPosterStyle();
   if (!bg.src) {
     return NextResponse.json(
       { error: "請先揀選一個品牌背景主題" },

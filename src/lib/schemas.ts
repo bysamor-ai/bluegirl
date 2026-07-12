@@ -52,7 +52,8 @@ export const generatePosterSchema = z.object({
   backgroundId: z
     .enum(backgroundIds)
     .refine((v) => v !== "none", { message: "請先揀選一個品牌背景主題" }),
-  styleId: z.enum(posterStyleIds).default("grid-minimal"),
+  /** 冇指定就由 server 隨機揀風格 */
+  styleId: z.enum(posterStyleIds).optional(),
   restaurantId: z.string().uuid().optional(),
   items: z
     .array(
