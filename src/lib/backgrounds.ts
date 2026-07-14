@@ -24,8 +24,12 @@ export interface BackgroundConfig {
   aspect: string;
   /** 內容安全區 padding（避開品牌 footer／樽身） */
   contentClass: string;
-  /** AI 海報生成用嘅輸出尺寸（gpt-image-2 image_size preset） */
-  posterSize: string;
+  /**
+   * AI 海報生成輸出尺寸（gpt-image-2 自訂 image_size）。
+   * 對齊背景原圖長寬比；模型會自動約成 16 嘅倍數（±1% 偏差）。
+   * 實測長邊上限約 2363，所以超大原圖按比例縮到呢個級數。
+   */
+  posterSize: { width: number; height: number };
 }
 
 export const backgrounds: Record<BackgroundId, BackgroundConfig> = {
@@ -35,7 +39,7 @@ export const backgrounds: Record<BackgroundId, BackgroundConfig> = {
     src: null,
     aspect: "auto",
     contentClass: "",
-    posterSize: "portrait_4_3",
+    posterSize: { width: 1024, height: 1536 },
   },
   "gold-landscape": {
     id: "gold-landscape",
@@ -43,7 +47,8 @@ export const backgrounds: Record<BackgroundId, BackgroundConfig> = {
     src: "/backgrounds/gold-landscape.jpg",
     aspect: "7017 / 4962",
     contentClass: "px-[7%] pt-[5%] pb-[26%] sm:pr-[26%]",
-    posterSize: "landscape_4_3",
+    // 原圖 7017×4962（1.414:1），按比例出最大可用尺寸
+    posterSize: { width: 2352, height: 1664 },
   },
   "gold-portrait": {
     id: "gold-portrait",
@@ -51,7 +56,8 @@ export const backgrounds: Record<BackgroundId, BackgroundConfig> = {
     src: "/backgrounds/gold-portrait.jpg",
     aspect: "1182 / 2363",
     contentClass: "px-[9%] pt-[6%] pb-[24%]",
-    posterSize: "portrait_16_9",
+    // 原圖 1182×2363，模型實際輸出 1168×2352
+    posterSize: { width: 1182, height: 2363 },
   },
   "white-landscape": {
     id: "white-landscape",
@@ -59,7 +65,8 @@ export const backgrounds: Record<BackgroundId, BackgroundConfig> = {
     src: "/backgrounds/white-landscape.jpg",
     aspect: "4962 / 3509",
     contentClass: "px-[7%] pt-[5%] pb-[30%]",
-    posterSize: "landscape_4_3",
+    // 原圖 4962×3509（1.414:1）
+    posterSize: { width: 2352, height: 1664 },
   },
   "white-portrait": {
     id: "white-portrait",
@@ -67,7 +74,8 @@ export const backgrounds: Record<BackgroundId, BackgroundConfig> = {
     src: "/backgrounds/white-portrait.jpg",
     aspect: "3509 / 4961",
     contentClass: "px-[8%] pt-[6%] pb-[28%]",
-    posterSize: "portrait_4_3",
+    // 原圖 3509×4961（1:1.414）
+    posterSize: { width: 1664, height: 2352 },
   },
 };
 
