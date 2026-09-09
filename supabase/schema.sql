@@ -88,3 +88,48 @@ create policy "anon upload food-images (testing)"
   on storage.objects for insert
   to anon, authenticated
   with check (bucket_id = 'food-images');
+
+-- ================================================================
+-- 牆貼報價工具（/wall-sticker）
+-- ================================================================
+
+create table if not exists public.wall_sticker_jobs (
+  id uuid primary key default gen_random_uuid(),
+  merchant_name text,
+  photo_url text,
+  design_url text,
+  mockup_url text,
+  width_m numeric(10, 3) not null default 0,
+  height_m numeric(10, 3) not null default 0,
+  area_sqm numeric(12, 4) not null default 0,
+  price_hkd integer not null default 0,
+  quad jsonb,
+  obstructions jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.wall_sticker_jobs enable row level security;
+
+drop policy if exists "anon full access (testing)" on public.wall_sticker_jobs;
+create policy "anon full access (testing)"
+  on public.wall_sticker_jobs for all
+  to anon, authenticated
+  using (true) with check (true);
+
+-- ---------- Storage：wall-stickers bucket ----------
+-- 公開讀取；anon 可上傳（測試設定）
+
+insert into storage.buckets (id, name, public)
+values ('wall-stickers', 'wall-stickers', true)
+on conflict (id) do nothing;
+
+drop policy if exists "public read wall-stickers" on storage.objects;
+create policy "public read wall-stickers"
+  on storage.objects for select
+  using (bucket_id = 'wall-stickers');
+
+drop policy if exists "anon upload wall-stickers (testing)" on storage.objects;
+create policy "anon upload wall-stickers (testing)"
+  on storage.objects for insert
+  to anon, authenticated
+  with check (bucket_id = 'wall-stickers');

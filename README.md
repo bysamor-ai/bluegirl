@@ -84,17 +84,40 @@ src/
 │   ├── editor/page.tsx          # 建立新餐牌
 │   ├── editor/[id]/page.tsx     # 編輯現有記錄
 │   ├── menu/[id]/page.tsx       # 最終餐牌展示頁（可列印）
+│   ├── wall-sticker/page.tsx    # 牆貼報價 + 實景效果圖（見下面第 7 節）
 │   └── api/
 │       ├── restaurants/…        # 儲存／載入／刪除
-│       └── generate-image/…     # fal.ai 圖片生成（server-only）
-├── components/                  # MenuForm / MenuItemRow / MenuPreview / EditorShell …
-└── lib/                         # themes / schemas(zod) / format(HKD) / supabase clients
+│       ├── generate-image/…     # fal.ai 圖片生成（server-only）
+│       ├── generate-sticker-design/…  # fal.ai 生成牆貼設計稿（server-only）
+│       └── refine-mockup/…      # fal.ai 精修實景效果圖（server-only）
+├── components/
+│   ├── …                        # MenuForm / MenuItemRow / MenuPreview / EditorShell …
+│   └── wall-sticker/            # WallStickerStudio / PhotoMarker / SpecForm / QuoteCard …
+└── lib/
+    ├── …                        # themes / schemas(zod) / format(HKD) / supabase clients
+    └── wall-sticker/            # geometry(homography) / pricing / render(canvas) …
 supabase/
 ├── schema.sql                   # 資料表 + RLS + Storage
 └── seed.sql                     # 示範資料
 ```
 
-## 7. 安全備註（測試設定）
+## 7. 牆貼報價工具（`/wall-sticker`）
+
+前線同事去到商戶現場用嘅工具：影相 → 框出貼位 → 入闊高 → 即刻有報價同實景效果圖。
+
+| 步驟 | 做咩 |
+| --- | --- |
+| ① 框出貼位 | 上載店舖相，拖四個綠點框住要貼嘅位置（可拖成斜角）。「保護前景物件」模式可以框起人／柱，貼圖唔會蓋過去。 |
+| ② 尺寸同報價 | 入闊高（米／厘米可切換），即時計 `面積 × HK$1,000`，四捨五入到 HK$1。 |
+| ③ 設計稿 | AI 生成 BLUE GIRL 風格設計稿，或者上載 design team 出嘅 artwork。 |
+| ④ 實景效果圖 | 前端用真正嘅 homography 投影變換即時合成，可下載；亦可撳「AI 精修」交俾 fal.ai 執靚光影。 |
+
+- **報價率**：改 [`src/lib/wall-sticker/pricing.ts`](src/lib/wall-sticker/pricing.ts) 嘅 `RATE_PER_SQM` 一個常數就得。
+- **唔使資料庫都用得**：報價同效果圖全部喺瀏覽器計，Supabase 只係用嚟存檔（`wall_sticker_jobs` 表 + `wall-stickers` bucket，已寫入 `schema.sql`）。
+- **AI 唔出中文字**：生成 prompt 明確要求唔好出任何文字，避免出錯字；文字應該由 design team 或者前端疊上去。
+- **單元測試**：`npm test`（Vitest）覆蓋報價公式同幾何運算（homography、多邊形判斷、雙線性取樣）。
+
+## 8. 安全備註（測試設定）
 
 - RLS 政策同 Storage 政策係 **測試用嘅寬鬆設定**（anon 全權限）。上正式環境前請改為只限已驗證用戶。
 - `FAL_KEY` 只喺伺服器 route handler 使用；anon key 屬 Supabase 公開金鑰設計。
