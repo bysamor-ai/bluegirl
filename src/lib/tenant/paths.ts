@@ -30,3 +30,13 @@ export function tenantNewEditorPath(token: string): string {
 export function tenantWallStickerPath(token: string): string {
   return `${tenantBasePath(token)}/wall-sticker`;
 }
+
+/** 租戶餐廳 API 前綴 `/api/t/<token>/restaurants` */
+export function tenantRestaurantsApiPath(token: string): string {
+  return `/api/t/${encodeURIComponent(token)}/restaurants`;
+}
+
+/** 單筆餐廳 API `/api/t/<token>/restaurants/<id>` */
+export function tenantRestaurantApiPath(token: string, restaurantId: string): string {
+  return `${tenantRestaurantsApiPath(token)}/${encodeURIComponent(restaurantId)}`;
+}

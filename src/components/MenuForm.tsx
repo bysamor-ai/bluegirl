@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
 import { backgrounds, backgroundIds } from "@/lib/backgrounds";
-import { tenantMenuPath } from "@/lib/tenant/paths";
+import { tenantMenuPath, tenantRestaurantsApiPath } from "@/lib/tenant/paths";
 import MenuItemRow from "./MenuItemRow";
 
 /** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
@@ -138,7 +138,7 @@ export default function MenuForm({
     setSaving(true);
     setSaveError(null);
     try {
-      const response = await fetch("/api/restaurants", {
+      const response = await fetch(tenantRestaurantsApiPath(token), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),

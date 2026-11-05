@@ -9,6 +9,7 @@ import {
   tenantEditorPath,
   tenantMenuPath,
   tenantNewEditorPath,
+  tenantRestaurantApiPath,
 } from "@/lib/tenant/paths";
 
 /** 已儲存記錄清單（客戶端處理刪除，optimistic 移除） */
@@ -36,7 +37,7 @@ export default function RestaurantList({
     setDeletingId(id);
     setError(null);
     try {
-      const response = await fetch(`/api/restaurants/${id}`, {
+      const response = await fetch(tenantRestaurantApiPath(token, id), {
         method: "DELETE",
       });
       if (!response.ok) {

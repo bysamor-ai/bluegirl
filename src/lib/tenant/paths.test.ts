@@ -4,6 +4,8 @@ import {
   tenantEditorPath,
   tenantMenuPath,
   tenantNewEditorPath,
+  tenantRestaurantApiPath,
+  tenantRestaurantsApiPath,
   tenantWallStickerPath,
 } from "./paths";
 
@@ -46,5 +48,16 @@ describe("token 編碼", () => {
   it("空 token 照砌（唔做驗證）", () => {
     expect(tenantBasePath("")).toBe("/t/");
     expect(tenantNewEditorPath("")).toBe("/t//editor");
+  });
+});
+
+describe("API 路徑", () => {
+  it("餐廳 API 路徑", () => {
+    expect(tenantRestaurantsApiPath("abc123DEF456")).toBe("/api/t/abc123DEF456/restaurants");
+    expect(tenantRestaurantApiPath("abc123DEF456", "r1")).toBe("/api/t/abc123DEF456/restaurants/r1");
+  });
+  it("特殊字元會被編碼", () => {
+    expect(tenantRestaurantsApiPath("a/b")).toBe("/api/t/a%2Fb/restaurants");
+    expect(tenantRestaurantApiPath("t", "../x")).toBe("/api/t/t/restaurants/..%2Fx");
   });
 });
