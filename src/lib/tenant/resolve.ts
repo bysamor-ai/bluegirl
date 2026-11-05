@@ -1,3 +1,6 @@
+// 用 service role 查 clients 表（token 係秘密，絕對唔可以入 client bundle）
+import "server-only";
+
 import { backgroundIds, type BackgroundId } from "@/lib/backgrounds";
 import { retryOnColdStart } from "@/lib/supabase/cold-start";
 import { getSupabaseServerClient } from "@/lib/supabase/server";

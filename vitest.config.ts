@@ -3,7 +3,15 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    // 對應 tsconfig 嘅 "@/*" -> "src/*"
-    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+    alias: {
+      // 對應 tsconfig 嘅 "@/*" -> "src/*"
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // `server-only` 靠 "react-server" export condition 分流：Next.js 喺 server
+      // 會攞 empty.js，其他環境攞 index.js（會拋錯）。Vitest 唔係 react-server
+      // 環境，所以明確指去 package 自己嗰個空模組，等伺服器端模組測試得到。
+      "server-only": fileURLToPath(
+        new URL("./node_modules/server-only/empty.js", import.meta.url)
+      ),
+    },
   },
 });

@@ -2,7 +2,8 @@ import Link from "next/link";
 import RestaurantList from "@/components/RestaurantList";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { isColdStartError, retryOnColdStart } from "@/lib/supabase/cold-start";
-import { getTenantFromParams, tenantBasePath, type TenantRouteParams } from "@/lib/tenant/params";
+import { getTenantFromParams, type TenantRouteParams } from "@/lib/tenant/params";
+import { tenantNewEditorPath } from "@/lib/tenant/paths";
 import type { RestaurantRow } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export default async function TenantHomePage({
 }) {
   // 刻意唔包 try/catch：資料庫故障嘅例外要浮上 error boundary，唔可以變成 404
   const tenant = await getTenantFromParams(params);
-  const base = tenantBasePath(tenant.token);
+  const newEditorHref = tenantNewEditorPath(tenant.token);
 
   let restaurants: RestaurantRow[] = [];
   let loadError: string | null = null;
@@ -54,7 +55,7 @@ export default async function TenantHomePage({
           </p>
         </div>
         <Link
-          href={`${base}/editor`}
+          href={newEditorHref}
           className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           ＋ 建立新餐牌
@@ -74,7 +75,7 @@ export default async function TenantHomePage({
             </p>
             <p className="mt-3 text-sm text-blue-700">
               想即刻開工嘅話，編輯器唔需要資料庫都用得 —{" "}
-              <Link href={`${base}/editor`} className="underline">
+              <Link href={newEditorHref} className="underline">
                 立即開啟
               </Link>
             </p>
@@ -91,7 +92,7 @@ export default async function TenantHomePage({
             </p>
             <p className="mt-3 text-sm text-amber-700">
               （編輯器同即時預覽唔需要資料庫都可以試用 —{" "}
-              <Link href={`${base}/editor`} className="underline">
+              <Link href={newEditorHref} className="underline">
                 立即開啟
               </Link>
               ）

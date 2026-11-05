@@ -1,3 +1,7 @@
+// SUPABASE_SERVICE_ROLE_KEY 一旦入到 client bundle 就等於公開晒成個資料庫。
+// 註解靠唔住，所以用 `server-only` 令誤 import 喺 build 階段即刻爆。
+import "server-only";
+
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import MenuPreview from "@/components/MenuPreview";
 import PrintButton from "@/components/PrintButton";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getTenantFromParams, tenantBasePath, type TenantRouteParams } from "@/lib/tenant/params";
+import { getTenantFromParams, type TenantRouteParams } from "@/lib/tenant/params";
+import { tenantBasePath, tenantEditorPath } from "@/lib/tenant/paths";
 import type { RestaurantWithItems } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export default async function MenuPage({
         </Link>
         <div className="flex gap-2">
           <Link
-            href={`${base}/editor/${restaurant.id}`}
+            href={tenantEditorPath(tenant.token, restaurant.id)}
             className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
           >
             ✏️ 編輯

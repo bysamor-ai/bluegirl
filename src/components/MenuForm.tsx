@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
 import { backgrounds, backgroundIds } from "@/lib/backgrounds";
+import { tenantMenuPath } from "@/lib/tenant/paths";
 import MenuItemRow from "./MenuItemRow";
 
 /** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
@@ -147,7 +148,7 @@ export default function MenuForm({
         throw new Error(data.error ?? "儲存失敗");
       }
       // 儲存成功即刻轉去展示頁（optimistic 導航）
-      router.push(`/t/${encodeURIComponent(token)}/menu/${data.id}`);
+      router.push(tenantMenuPath(token, data.id));
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "儲存失敗");
       setSaving(false);

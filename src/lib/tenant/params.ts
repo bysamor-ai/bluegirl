@@ -1,3 +1,9 @@
+// 呢個模組會經 ./resolve 行到 service role Supabase client，
+// 一旦被 client component import 就會將 service role 嘅程式碼路徑拉落 bundle。
+// `server-only` 令呢種 import 喺 build 階段即刻失敗，唔使靠人手 review 把關。
+// 純字串嘅 URL helper 喺 ./paths，client 同 server 都用得。
+import "server-only";
+
 import { notFound } from "next/navigation";
 import { getTenantByToken } from "./resolve";
 import type { Tenant } from "./types";
@@ -26,9 +32,4 @@ export async function getTenantFromParams(
   if (!tenant) notFound();
 
   return tenant;
-}
-
-/** 租戶頁面嘅連結前綴，例如 `/t/abc123DEF456` */
-export function tenantBasePath(token: string): string {
-  return `/t/${encodeURIComponent(token)}`;
 }

@@ -18,7 +18,7 @@ vi.mock("./resolve", () => ({
   getTenantByToken: (raw: string) => getTenantByToken(raw),
 }));
 
-import { getTenantFromParams, tenantBasePath, type TenantRouteParams } from "./params";
+import { getTenantFromParams, type TenantRouteParams } from "./params";
 import type { Tenant } from "./types";
 
 const tenant: Tenant = {
@@ -69,21 +69,27 @@ describe("getTenantFromParams", () => {
     expect(getTenantByToken).not.toHaveBeenCalled();
   });
 
+  // 空字串係 string，所以會行落 getTenantByToken，由 normalizeToken 回 null → notFound()。
+  // 分別喺於：唔係 string 嗰啲根本唔會打 getTenantByToken。
+  it("token 係空字串時回 null → notFound()", async () => {
+    getTenantByToken.mockResolvedValueOnce(null);
+    await expect(getTenantFromParams(paramsOf(""))).rejects.toBeInstanceOf(NotFoundError);
+    expect(getTenantByToken).toHaveBeenCalledWith("");
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  it("token 淨係空白時回 null → notFound()", async () => {
+    getTenantByToken.mockResolvedValueOnce(null);
+    await expect(getTenantFromParams(paramsOf("   "))).rejects.toBeInstanceOf(NotFoundError);
+    expect(getTenantByToken).toHaveBeenCalledWith("   ");
+    expect(notFound).toHaveBeenCalled();
+  });
+
   it("資料庫故障嘅例外要原樣拋出，唔可以變成 notFound()", async () => {
     getTenantByToken.mockRejectedValueOnce(new Error("租戶查詢失敗：connection reset"));
     await expect(getTenantFromParams(paramsOf("abc123DEF456"))).rejects.toThrow(
       "租戶查詢失敗"
     );
     expect(notFound).not.toHaveBeenCalled();
-  });
-});
-
-describe("tenantBasePath", () => {
-  it("砌出 /t/<token>", () => {
-    expect(tenantBasePath("abc123DEF456")).toBe("/t/abc123DEF456");
-  });
-
-  it("特殊字元會被編碼", () => {
-    expect(tenantBasePath("a/b")).toBe("/t/a%2Fb");
   });
 });
