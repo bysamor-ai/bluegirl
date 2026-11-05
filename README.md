@@ -129,6 +129,44 @@ supabase/
 - `SUPABASE_SERVICE_ROLE_KEY`：伺服器端讀取租戶資料用，會繞過 RLS，**只可以放喺伺服器環境變數**（`.env.local`、Vercel Environment Variables），切勿加 `NEXT_PUBLIC_` 前綴，亦唔好提交入 git。
 - 核實 migration：`select count(*) as total, count(client_id) as assigned from public.restaurants;` 兩個數字應該相等。
 
+### Phase 2 鎖緊（部署並驗證之後先至好跑）
+
+Phase 2 migration：[supabase/migrations/2026-11-05-multi-tenant-phase2-lockdown.sql](supabase/migrations/2026-11-05-multi-tenant-phase2-lockdown.sql)
+
+1. 喺 Vercel 加 `SUPABASE_SERVICE_ROLE_KEY`（Production + Preview），**唔好用 `NEXT_PUBLIC_` 前綴**。
+2. 部署新版，然後逐項驗證：`/t/<token>` 列到記錄、`/t/<token>/editor` 儲存得到、上傳相片成功、AI 生成行得到、`/` 係中性說明頁。
+   **呢步未過唔好行第 3 步** —— 跑 Phase 2 之前 revert 條 merge 可以完全返轉頭，跑完就冇咗呢條退路。
+3. 喺 Supabase SQL Editor 執行 Phase 2 script（執行前先撳一次 backup）。
+4. **即刻驗證 Storage 兩件事**（Phase 2 會刪走 `public read food-images` 嗰條 select policy，用嚟堵塞 anon 列舉所有租戶檔名嘅漏洞；bucket 保持 public）：
+
+   a) **圖片仍然顯示得到** —— public 端點唔經 RLS，預期 `200` + `content-type: image/…`
+
+   ```bash
+   curl -sI "<SUPABASE_URL>/storage/v1/object/public/food-images/<client_id>/<檔名>.jpg"
+   ```
+
+   b) **列舉已經失效** —— list 端點要 select policy，預期回空陣列或者 4xx
+
+   ```bash
+   curl -s -X POST "<SUPABASE_URL>/storage/v1/object/list/food-images" \
+     -H "apikey: <ANON_KEY>" -H "Authorization: Bearer <ANON_KEY>" \
+     -H "Content-Type: application/json" \
+     -d '{"prefix":"","limit":100}'
+   ```
+
+   如果仍然回到檔名清單，即係漏洞未堵到。
+
+5. 如果 (a) 爛咗（圖片顯示唔到）：退路係改用 signed URL（`createSignedUrl`，上傳／儲存／展示三處都要改），範圍大，屬**日後工作**。臨時止血可以重建返嗰條 policy：
+
+   ```sql
+   create policy "public read food-images" on storage.objects
+     for select using (bucket_id = 'food-images');
+   ```
+
+   即係暫時接受返個列舉漏洞，直到 signed URL 做好為止。
+
+- Phase 2 **刻意唔加** `client_id set not null`：孤兒記錄已經係 fail-closed（查詢一律帶 `.eq("client_id", …)`，`=` 唔會 match NULL），而 `not null` 喺 production SQL Editor 中途爆嘅風險反而唔細。理由寫咗喺 script 入面。
+
 ## 8. 安全備註（測試設定）
 
 - RLS 政策同 Storage 政策係 **測試用嘅寬鬆設定**（anon 全權限）。上正式環境前請改為只限已驗證用戶。
