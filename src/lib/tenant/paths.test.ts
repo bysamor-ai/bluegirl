@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   tenantBasePath,
+  tenantGenerateImageApiPath,
+  tenantGeneratePosterApiPath,
+  tenantGenerateStickerDesignApiPath,
+  tenantRefineMockupApiPath,
+  tenantUploadApiPath,
   tenantEditorPath,
   tenantMenuPath,
   tenantNewEditorPath,
@@ -59,5 +64,19 @@ describe("API 路徑", () => {
   it("特殊字元會被編碼", () => {
     expect(tenantRestaurantsApiPath("a/b")).toBe("/api/t/a%2Fb/restaurants");
     expect(tenantRestaurantApiPath("t", "../x")).toBe("/api/t/t/restaurants/..%2Fx");
+  });
+});
+
+describe("上傳／AI 生成 API 路徑", () => {
+  it("全部喺 /api/t/<token>/ 之下", () => {
+    const t = "abc123DEF456";
+    expect(tenantUploadApiPath(t)).toBe("/api/t/abc123DEF456/upload");
+    expect(tenantGenerateImageApiPath(t)).toBe("/api/t/abc123DEF456/generate-image");
+    expect(tenantGeneratePosterApiPath(t)).toBe("/api/t/abc123DEF456/generate-poster");
+    expect(tenantGenerateStickerDesignApiPath(t)).toBe("/api/t/abc123DEF456/generate-sticker-design");
+    expect(tenantRefineMockupApiPath(t)).toBe("/api/t/abc123DEF456/refine-mockup");
+  });
+  it("token 會被編碼", () => {
+    expect(tenantUploadApiPath("a/b")).toBe("/api/t/a%2Fb/upload");
   });
 });

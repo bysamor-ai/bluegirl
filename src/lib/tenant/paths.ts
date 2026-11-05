@@ -40,3 +40,33 @@ export function tenantRestaurantsApiPath(token: string): string {
 export function tenantRestaurantApiPath(token: string, restaurantId: string): string {
   return `${tenantRestaurantsApiPath(token)}/${encodeURIComponent(restaurantId)}`;
 }
+
+/** 租戶 API 前綴 `/api/t/<token>` */
+function tenantApiBase(token: string): string {
+  return `/api/t/${encodeURIComponent(token)}`;
+}
+
+/** 食物相上傳 `/api/t/<token>/upload` */
+export function tenantUploadApiPath(token: string): string {
+  return `${tenantApiBase(token)}/upload`;
+}
+
+/** AI 生成菜式相 `/api/t/<token>/generate-image` */
+export function tenantGenerateImageApiPath(token: string): string {
+  return `${tenantApiBase(token)}/generate-image`;
+}
+
+/** AI 生成海報 `/api/t/<token>/generate-poster` */
+export function tenantGeneratePosterApiPath(token: string): string {
+  return `${tenantApiBase(token)}/generate-poster`;
+}
+
+/** AI 生成牆貼設計稿 `/api/t/<token>/generate-sticker-design` */
+export function tenantGenerateStickerDesignApiPath(token: string): string {
+  return `${tenantApiBase(token)}/generate-sticker-design`;
+}
+
+/** AI 精修效果圖 `/api/t/<token>/refine-mockup` */
+export function tenantRefineMockupApiPath(token: string): string {
+  return `${tenantApiBase(token)}/refine-mockup`;
+}

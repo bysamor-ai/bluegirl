@@ -3,13 +3,10 @@
 import { useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
-import { uploadFoodImage } from "@/lib/supabase/client";
+import { tenantUploadApiPath } from "@/lib/tenant/paths";
 
 interface MenuItemRowProps {
-  /**
-   * 租戶 token。呢期仲未用到（相片上載同 AI 生成行緊現有嘅 /api/... 路徑），
-   * 預先穿線落嚟，等 Task 4／5 換帶 token 嘅 API 路徑時唔使再改一次元件樹。
-   */
+  /** 租戶 token，用嚟砌上傳 API 路徑 `/api/t/<token>/upload` */
   token: string;
   index: number;
   total: number;
@@ -23,7 +20,6 @@ interface MenuItemRowProps {
 
 /** 單個菜式編輯列：相片上載／AI 生成（白色背景）、名稱、價錢、排序、移除 */
 export default function MenuItemRow({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Task 4／5 先會用到
   token,
   index,
   total,
@@ -56,10 +52,22 @@ export default function MenuItemRow({
     setUploadError(null);
     setUploading(true);
     try {
-      const url = await uploadFoodImage(file);
-      setValue(`items.${index}.imageUrl`, url, { shouldDirty: true });
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch(tenantUploadApiPath(token), { method: "POST", body });
+      // 平台層（例如 body 過大）可能回非 JSON，所以 parse 失敗要照出通用訊息
+      const data = await res.json().catch(() => null);
+      if (!res.ok || typeof data?.url !== "string") {
+        throw new Error(
+          typeof data?.error === "string" ? data.error : "上傳失敗，請稍後再試"
+        );
+      }
+      setValue(`items.${index}.imageUrl`, data.url, { shouldDirty: true });
     } catch (e) {
-      setUploadError(e instanceof Error ? e.message : "上傳失敗");
+      // fetch 本身失敗（斷網）會拋 TypeError，訊息係英文，唔直接顯示
+      setUploadError(
+        e instanceof Error && !(e instanceof TypeError) ? e.message : "上傳失敗，請檢查網絡後再試"
+      );
     } finally {
       setUploading(false);
     }
