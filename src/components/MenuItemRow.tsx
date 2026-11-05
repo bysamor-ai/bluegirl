@@ -3,7 +3,9 @@
 import { useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
+import { prepareImageForUpload } from "@/lib/image-resize";
 import { tenantUploadApiPath } from "@/lib/tenant/paths";
+import { validateUpload } from "@/lib/tenant/upload-validation";
 
 interface MenuItemRowProps {
   /** 租戶 token，用嚟砌上傳 API 路徑 `/api/t/<token>/upload` */
@@ -52,8 +54,14 @@ export default function MenuItemRow({
     setUploadError(null);
     setUploading(true);
     try {
+      // 過大嘅相先喺瀏覽器縮細（Vercel body 上限 4.5MB）；縮唔到就用原檔
+      const prepared = await prepareImageForUpload(file);
+      // 客戶端預檢只係方便，server 仍會重新驗證
+      const invalid = validateUpload(prepared);
+      if (invalid) throw new Error(invalid);
+
       const body = new FormData();
-      body.append("file", file);
+      body.append("file", prepared);
       const res = await fetch(tenantUploadApiPath(token), { method: "POST", body });
       // 平台層（例如 body 過大）可能回非 JSON，所以 parse 失敗要照出通用訊息
       const data = await res.json().catch(() => null);
