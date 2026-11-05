@@ -114,7 +114,7 @@ create index if not exists restaurants_client_idx
 
 - 新增 `POST /api/t/[token]/upload`，瀏覽器送 `FormData`，server 用 service role 上傳
 - 檔案路徑加租戶前綴：`<client_id>/<uuid>.<ext>`
-- Server 端驗證：只接受 `image/*`、上限 10 MB
+- Server 端驗證：只接受 `image/*`、上限 4 MB（Vercel serverless body 硬上限 4.5MB；瀏覽器端會先縮圖）
 - 移除 storage 嘅 `anon upload food-images (testing)` policy
 - `src/lib/supabase/client.ts` 成個刪走（`isSupabaseConfigured`、`getSupabaseBrowserClient`、`FOOD_IMAGES_BUCKET` 本身已經冇人用）
 
@@ -161,7 +161,7 @@ Bucket 維持公開讀取 —— 檔名係隨機 uuid，實際上估唔到。**�
 | Token 查唔到 | 404 頁，唔透露原因 |
 | 冇 `SUPABASE_SERVICE_ROLE_KEY` | 啟動時拋明確錯誤 |
 | DB 冷啟動（PGRST205） | 沿用 `retryOnColdStart()`（commit `ea85b7b`），租戶查詢一樣包住 |
-| 上傳非圖片／超過 10 MB | 400，中文錯誤訊息 |
+| 上傳非圖片／超過 4 MB | 400，中文錯誤訊息 |
 | API 收到唔屬於該租戶嘅 `restaurant_id` | 404（唔用 403，避免confirm咗該 id 存在） |
 
 ## 9. 測試計劃
