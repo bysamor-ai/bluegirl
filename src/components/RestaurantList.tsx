@@ -9,9 +9,16 @@ import { formatDate } from "@/lib/format";
 /** 已儲存記錄清單（客戶端處理刪除，optimistic 移除） */
 export default function RestaurantList({
   restaurants,
+  token,
 }: {
   restaurants: RestaurantRow[];
+  /**
+   * 租戶 token。而家用嚟砌租戶內嘅連結；
+   * Task 4／5 之後刪除用嘅 API 路徑亦會改成帶 token。
+   */
+  token: string;
 }) {
+  const base = `/t/${encodeURIComponent(token)}`;
   const [rows, setRows] = useState(restaurants);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -49,7 +56,7 @@ export default function RestaurantList({
           撳「建立新餐牌」開始你嘅第一份餐牌
         </p>
         <Link
-          href="/editor"
+          href={`${base}/editor`}
           className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           建立新餐牌
@@ -94,13 +101,13 @@ export default function RestaurantList({
             </div>
             <div className="flex shrink-0 gap-2 text-sm">
               <Link
-                href={`/menu/${row.id}`}
+                href={`${base}/menu/${row.id}`}
                 className="rounded-lg bg-slate-900 px-3 py-1.5 font-medium text-white hover:bg-slate-700"
               >
                 展示
               </Link>
               <Link
-                href={`/editor/${row.id}`}
+                href={`${base}/editor/${row.id}`}
                 className="rounded-lg border border-slate-300 px-3 py-1.5 text-slate-600 hover:bg-slate-50"
               >
                 編輯

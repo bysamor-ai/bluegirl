@@ -6,6 +6,11 @@ import type { RestaurantFormValues } from "@/lib/schemas";
 import { uploadFoodImage } from "@/lib/supabase/client";
 
 interface MenuItemRowProps {
+  /**
+   * 租戶 token。呢期仲未用到（相片上載同 AI 生成行緊現有嘅 /api/... 路徑），
+   * 預先穿線落嚟，等 Task 4／5 換帶 token 嘅 API 路徑時唔使再改一次元件樹。
+   */
+  token: string;
   index: number;
   total: number;
   generating: boolean;
@@ -18,6 +23,8 @@ interface MenuItemRowProps {
 
 /** 單個菜式編輯列：相片上載／AI 生成（白色背景）、名稱、價錢、排序、移除 */
 export default function MenuItemRow({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Task 4／5 先會用到
+  token,
   index,
   total,
   generating,

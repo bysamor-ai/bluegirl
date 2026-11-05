@@ -8,7 +8,15 @@ import { backgrounds, backgroundIds } from "@/lib/backgrounds";
 import MenuItemRow from "./MenuItemRow";
 
 /** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
-export default function MenuForm() {
+export default function MenuForm({
+  token,
+}: {
+  /**
+   * 租戶 token。而家用嚟砌儲存後嘅導航路徑；
+   * Task 4／5 之後 API 路徑亦會改成帶 token（例如 /api/t/<token>/restaurants）。
+   */
+  token: string;
+}) {
   const router = useRouter();
   const {
     register,
@@ -139,7 +147,7 @@ export default function MenuForm() {
         throw new Error(data.error ?? "儲存失敗");
       }
       // 儲存成功即刻轉去展示頁（optimistic 導航）
-      router.push(`/menu/${data.id}`);
+      router.push(`/t/${encodeURIComponent(token)}/menu/${data.id}`);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "儲存失敗");
       setSaving(false);
@@ -198,6 +206,7 @@ export default function MenuForm() {
         {fields.map((field, index) => (
           <MenuItemRow
             key={field.id}
+            token={token}
             index={index}
             total={fields.length}
             generating={generatingIndex === index}
