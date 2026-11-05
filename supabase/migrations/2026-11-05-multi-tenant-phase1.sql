@@ -5,6 +5,27 @@
 --
 -- 本期只新增：唔改、唔刪任何 policy，亦唔加 not null，
 -- 因為線上舊版仍然用緊 anon key，要繼續行得通。
+--
+-- ⚠️ 跑之前先確認：呢份 script 係咪第一次跑？
+--
+--     select id, name, token from public.clients order by created_at;
+--
+--    如果見到舊名 'BLUE GIRL 餐牌生成器'，代表早期版本已經跑過。
+--    **唔好照跑成份 script** —— 下面個 insert 嘅 guard 係
+--    `where not exists (... where name = 'BLUE GIRL')`，舊名唔 match，
+--    會多插一個 token 唔同嘅第三個租戶；而第 8 步回填只掂
+--    client_id is null，舊記錄仍然掛住舊租戶。結果就係你抄低嗰條
+--    token 開出嚟見到舊記錄，但新建嘅記錄跌咗去另一條 token。
+--
+--    嗰種情況改為淨係跑呢句：
+--
+--     update public.clients
+--        set name = 'BLUE GIRL',
+--            allow_brand_marks = true,
+--            brand_prompt = 'a BLUE GIRL beer bottle, navy and gold brand palette'
+--      where name = 'BLUE GIRL 餐牌生成器';
+--
+--    （`clients` 表查唔到 = 未跑過，照跑成份 script 就得。）
 -- ============================================================
 
 -- 1. 產生租戶 token（12 個英數字元）
@@ -71,7 +92,9 @@ select
   public.generate_client_token(),
   'BLUE GIRL',
   'BG',
-  '#2563eb',
+  -- 品牌深藍（同 MenuPreview 嘅品牌版面一致）。唔用通用預設 #2563eb，
+  -- 否則會同下面 brand_prompt 嘅 navy + gold 喺同一條 AI prompt 入面互相拉扯。
+  '#1e2a63',
   array['gold-landscape', 'gold-portrait', 'white-landscape', 'white-portrait'],
   true,
   'a BLUE GIRL beer bottle, navy and gold brand palette'

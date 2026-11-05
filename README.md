@@ -174,7 +174,18 @@ Phase 2 migration：[supabase/migrations/2026-11-05-multi-tenant-phase2-lockdown
 
 - Phase 2 **刻意唔加** `client_id set not null`：孤兒記錄已經係 fail-closed（查詢一律帶 `.eq("client_id", …)`，`=` 唔會 match NULL），而 `not null` 喺 production SQL Editor 中途爆嘅風險反而唔細。理由寫咗喺 script 入面。
 
-## 8. 安全備註（測試設定）
+## 8. 安全備註
 
-- RLS 政策同 Storage 政策係 **測試用嘅寬鬆設定**（anon 全權限）。上正式環境前請改為只限已驗證用戶。
-- `FAL_KEY` 只喺伺服器 route handler 使用；anon key 屬 Supabase 公開金鑰設計。
+安全狀態分兩個階段，睇你跑咗邊份 migration：
+
+| | Phase 2 之前 | Phase 2 之後 |
+| --- | --- | --- |
+| `restaurants` / `menu_items` / `generated_images` | anon 全權限（**任何人攞到 anon key 都讀寫得晒**） | anon 完全掂唔到，只有 service role |
+| `food-images` 上傳 | anon 可直接上傳 | 只可經 `/api/t/<token>/upload` |
+| `food-images` 列舉 | anon `list()` 列舉到所有租戶嘅檔名 | 列舉失效（圖片仍可經公開 URL 顯示） |
+
+- **anon key 本身印喺瀏覽器 bundle 入面**，屬公開設計 —— 所以 Phase 2 之前嘅「隔離」只係介面層，繞過個 app 就攞到晒。Phase 2 跑咗先算真隔離。
+- 租戶隔離 100% 由應用層保證：`getSupabaseServerClient()` 用 service role **繞過所有 RLS**，每個查詢都要自己加 `.eq("client_id", tenant.id)`。`src/app/t/[token]/tenant-isolation.test.ts` 同各 route 嘅測試守住呢點。
+- `SUPABASE_SERVICE_ROLE_KEY` **只限伺服器**，絕不可加 `NEXT_PUBLIC_` 前綴。搵唔到佢時 `getSupabaseServerClient()` 會直接拋錯（fail-closed），唔會降級用 anon。
+- `FAL_KEY` 只喺伺服器 route handler 使用。
+- ⚠️ **token 就係身分**：攞到條 `/t/<token>` 連結就入到，冇第二重驗證，而且會留喺瀏覽器歷史、連結預覽同截圖。要踢走某人就改 `clients` 嗰行嘅 token。四條 AI route 冇用量限制，所以請喺 fal.ai 設硬性消費上限。

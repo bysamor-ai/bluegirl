@@ -1,5 +1,15 @@
 -- ============================================================
 -- 示範資料 — 喺 schema.sql 之後執行
+--
+-- ⚠️ 多租戶化之後，呢份 script 已經過時。
+--    下面個 insert 冇填 client_id，而所有租戶頁面都係用
+--    `.eq("client_id", tenant.id)` 過濾 —— `.eq()` 唔會 match NULL，
+--    所以跑完之後呢筆示範記錄**任何租戶都見唔到**（fail-closed）。
+--
+--    真係要示範資料嘅話，自己補返 client_id：
+--      insert into public.restaurants (name, theme, client_id)
+--      values ('示範茶餐廳', 'classic',
+--              (select id from public.clients where name = 'BLUE GIRL' limit 1))
 -- ============================================================
 
 with r as (

@@ -79,7 +79,20 @@ drop policy if exists "public read food-images" on storage.objects;
 --    又可以俾任何人寫入嘅出入口。
 --    只刪 policy，唔刪表同 bucket（保守，萬一真係有歷史資料）。
 -- ------------------------------------------------------------
-drop policy if exists "anon full access (testing)" on public.wall_sticker_jobs;
+--    ⚠️ `drop policy if exists` 嘅 IF EXISTS 只保護 policy，唔保護 table。
+--    如果 public.wall_sticker_jobs 唔存在（呢張表係後期先加入 schema.sql，
+--    舊專案可能冇跑過嗰段），淨寫 drop policy 會拋
+--    `ERROR: relation "public.wall_sticker_jobs" does not exist`，
+--    而 Supabase SQL Editor 成份 script 係一個 transaction ——
+--    一爆就會連第 1 步嘅回填同第 2–4 步嘅 drop 一齊 rollback。
+--    所以要先確認張表存在先至 drop。
+do $$
+begin
+  if to_regclass('public.wall_sticker_jobs') is not null then
+    execute 'drop policy if exists "anon full access (testing)" on public.wall_sticker_jobs';
+  end if;
+end $$;
+
 drop policy if exists "public read wall-stickers" on storage.objects;
 drop policy if exists "anon upload wall-stickers (testing)" on storage.objects;
 
