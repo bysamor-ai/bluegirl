@@ -33,6 +33,13 @@
    - 建立 `restaurants`、`menu_items`、`generated_images` 三張表
    - 開啟 RLS，並加上寬鬆嘅測試政策（anon 全權限 — **上正式環境前要收緊**）
    - 建立 `food-images` Storage bucket（公開讀取、anon 可上傳）
+
+   > ⚠️ **`schema.sql` 只係用嚟開一個全新嘅 Supabase 專案。**
+   > 佢會 `create policy "anon full access (testing)"` ——
+   > 即係喺一個已經跑咗 [Phase 2 lockdown](#phase-2-鎖緊部署並驗證之後先至好跑) 嘅專案上面再跑一次，
+   > 會**重新建立返所有 anon 全權限 policy**，Phase 2 等於白做。
+   > 已經上咗多租戶嘅專案要改 schema，請加新嘅 migration 落
+   > [supabase/migrations/](supabase/migrations/)，**唔好**再跑 `schema.sql`。
 3. （可選）執行 [supabase/seed.sql](supabase/seed.sql) 加入示範餐廳「藍妹茶餐廳」。
 4. 去 **Project Settings → API** 抄低 `Project URL` 同 `anon public` key，填入環境變數。
 

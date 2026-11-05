@@ -37,7 +37,11 @@ export default async function EditEditorPage({
   // id 唔係合法 uuid（亂入網址）係用戶輸入錯，屬 404；其餘錯誤先係故障
   if (error && error.code === "22P02") notFound();
   if (error) {
-    throw new Error(`讀取餐牌失敗：${error.message}`);
+    // 對外一律通用訊息：Production Next 會收做 digest，但 Preview／dev 會原文顯示，
+    // 而 DB 原文可以帶出表名、欄位名甚至連線資訊。細節只寫 server log
+    // （同 lib/tenant/api.ts 嘅 serverErrorResponse 同一套紀律）。
+    console.error("[editor] 讀取餐牌失敗", error);
+    throw new Error("讀取餐牌失敗");
   }
   if (!data) notFound();
   const restaurant = data;

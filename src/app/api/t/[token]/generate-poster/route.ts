@@ -85,10 +85,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       .map((item) => `- ${item.name} …… ${formatHKD(item.price)}`)
       .join("\n");
 
+    // 注意：底圖係跟租戶嘅（clients.backgrounds），唔可以假設每張都有樽同底部 footer，
+    // 否則第二個客戶加自己底圖就會叫 AI 保護一隻唔存在嘅樽。只講「原有嘅品牌元素同版面」。
     const prompt =
       `Design a professional restaurant menu poster.\n` +
       `Image 1 is the official brand poster background template — use it as the EXACT ` +
-      `canvas: keep its colors, logos, bottle artwork and bottom brand footer completely unchanged, ` +
+      `canvas: keep its existing brand elements, artwork, colors and layout completely unchanged, ` +
       `and design all menu content within its empty area.\n` +
       `Image 2 is a DESIGN STYLE reference only — imitate its layout language, composition, ` +
       `dish presentation (${style.styleHint}), typography feel and price display style, ` +
@@ -100,7 +102,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
           `beautifully plated in the layout next to their matching names. ` +
           `Generate appetizing plated photos for any dish without a photo, matching the same style. `
         : `Generate an appetizing plated photo for each dish in the same presentation style. `) +
-      `All text must be legible and accurate. Do not cover the bottom brand footer or the bottle. ` +
+      `All text must be legible and accurate. Do not cover or alter any of the background's ` +
+      `existing brand elements. ` +
       `Do not add any other text or watermark.`;
 
     let imageUrl: string | undefined;
