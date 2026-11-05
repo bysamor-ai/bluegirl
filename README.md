@@ -21,6 +21,7 @@
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 專案 URL | 否（公開設計） |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key（配合 RLS） | 否（公開設計） |
 | `FAL_KEY` | fal.ai API key | **是 — 只限伺服器，切勿用 `NEXT_PUBLIC_` 開頭** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key（多租戶用，繞過 RLS） | **是 — 只限伺服器，切勿用 `NEXT_PUBLIC_` 開頭，切勿提交入 git** |
 | `FAL_IMAGE_MODEL`（可選） | 覆寫圖片模型 | 否 |
 
 複製 `.env.example` 做 `.env.local` 再填值。
@@ -116,6 +117,17 @@ supabase/
 - **唔使資料庫都用得**：報價同效果圖全部喺瀏覽器計，Supabase 只係用嚟存檔（`wall_sticker_jobs` 表 + `wall-stickers` bucket，已寫入 `schema.sql`）。
 - **AI 唔出中文字**：生成 prompt 明確要求唔好出任何文字，避免出錯字；文字應該由 design team 或者前端疊上去。
 - **單元測試**：`npm test`（Vitest）覆蓋報價公式同幾何運算（homography、多邊形判斷、雙線性取樣）。
+
+## 多租戶
+
+呢個工具以「租戶」（`public.clients`）區分唔同品牌。每個租戶有獨立 token，用戶經 token 網址進入，睇到自己嘅品牌同記錄。
+
+- Phase 1 migration：[supabase/migrations/2026-11-05-multi-tenant-phase1.sql](supabase/migrations/2026-11-05-multi-tenant-phase1.sql)
+  - 純新增，可重複執行：建立 `clients` 表、`restaurants.client_id`、`generate_client_token()`，並將現有記錄歸入 BLUE GIRL 租戶。
+  - 本機同 production 共用同一個 Supabase，執行前請先喺 Supabase 撳一次 backup。
+  - 執行後輸出兩個租戶嘅 token，請抄低。
+- `SUPABASE_SERVICE_ROLE_KEY`：伺服器端讀取租戶資料用，會繞過 RLS，**只可以放喺伺服器環境變數**（`.env.local`、Vercel Environment Variables），切勿加 `NEXT_PUBLIC_` 前綴，亦唔好提交入 git。
+- 核實 migration：`select count(*) as total, count(client_id) as assigned from public.restaurants;` 兩個數字應該相等。
 
 ## 8. 安全備註（測試設定）
 
