@@ -18,7 +18,7 @@
 - 跨租戶資源一律 404，**唔用 403**
 - 所有 `restaurants` 查詢必須帶 `client_id`；寫入時 `client_id` 由 server 填，**永不接受 request body 傳入**
 - Token 格式：12 個英數字元，由 `public.generate_client_token()` 產生
-- 上傳上限 **10 MB**，只接受 `image/*`
+- 上傳上限 **4 MB**（Vercel body 硬上限 4.5MB），只接受 `image/*`
 - 每個 task 完成後 `npm test`、`npx tsc --noEmit` 必須全過
 
 ## ⚠️ 本機同 production 共用同一個 Supabase
@@ -268,7 +268,7 @@ git commit -m "feat: API routes 租戶化，client_id 由 server 強制"
 **Interfaces:**
 - Consumes: `getTenantByToken()`、`getSupabaseServerClient()`
 - Produces:
-  - `export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024`
+  - `export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024`
   - `export function validateUpload(file: { type: string; size: number }): string | null`（回錯誤訊息，`null` 代表無問題）
   - `POST /api/t/<token>/upload`，收 `FormData`（欄位名 `file`），回 `{ url: string }`
 
@@ -277,8 +277,8 @@ git commit -m "feat: API routes 租戶化，client_id 由 server 強制"
 ```ts
 it("接受 image/jpeg", () => expect(validateUpload({ type: "image/jpeg", size: 1000 })).toBeNull());
 it("拒絕非圖片", () => expect(validateUpload({ type: "application/pdf", size: 1000 })).toMatch(/圖片/));
-it("拒絕超過 10MB", () => expect(validateUpload({ type: "image/png", size: MAX_UPLOAD_BYTES + 1 })).toMatch(/10/));
-it("啱啱 10MB 可以接受", () => expect(validateUpload({ type: "image/png", size: MAX_UPLOAD_BYTES })).toBeNull());
+it("拒絕超過 4MB", () => expect(validateUpload({ type: "image/png", size: MAX_UPLOAD_BYTES + 1 })).toMatch(/4 MB/));
+it("啱啱 4MB 可以接受", () => expect(validateUpload({ type: "image/png", size: MAX_UPLOAD_BYTES })).toBeNull());
 it("拒絕 0 byte", () => expect(validateUpload({ type: "image/png", size: 0 })).not.toBeNull());
 ```
 

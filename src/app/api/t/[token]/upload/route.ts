@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveTenant, serverErrorResponse } from "@/lib/tenant/api";
-import { MAX_UPLOAD_BYTES, validateUpload } from "@/lib/tenant/upload-validation";
+import {
+  MAX_UPLOAD_BYTES,
+  UPLOAD_TOO_LARGE_MESSAGE,
+  validateUpload,
+} from "@/lib/tenant/upload-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +38,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // 未解析 body 先擋明顯超標嘅請求（Content-Length 可偽造，真正上限喺下面按實際檔案大細驗）
     const declared = Number(request.headers.get("content-length"));
     if (Number.isFinite(declared) && declared > MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
-      return NextResponse.json({ error: "圖片太大，上限係 10 MB" }, { status: 400 });
+      return NextResponse.json({ error: UPLOAD_TOO_LARGE_MESSAGE }, { status: 400 });
     }
 
     let form: FormData;

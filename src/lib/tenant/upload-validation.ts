@@ -1,6 +1,11 @@
 // 純函數，冇任何 import：client／server 都用得，亦方便單元測試。
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+// Vercel serverless function 嘅 request body 硬上限係 4.5MB，超過會喺平台邊緣直接 413，
+// handler 根本入唔到，所以上限要喺 4.5MB 之下（連 multipart 開銷）。
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+/** 訊息由常數衍生，改上限唔使再逐處改字 */
+export const UPLOAD_TOO_LARGE_MESSAGE = `圖片太大，上限係 ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB`;
 
 /** 回錯誤訊息（可直接俾使用者睇），`null` 代表通過 */
 export function validateUpload(file: { type: string; size: number }): string | null {
@@ -12,7 +17,7 @@ export function validateUpload(file: { type: string; size: number }): string | n
     return "檔案係空嘅，請重新揀選";
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return "圖片太大，上限係 10 MB";
+    return UPLOAD_TOO_LARGE_MESSAGE;
   }
   return null;
 }

@@ -38,7 +38,7 @@
 
 ### Storage 說明
 
-`food-images` bucket 由 schema.sql 自動建立。如果想手動建立：Dashboard → **Storage → New bucket**，名稱 `food-images`，剔選 **Public bucket**，然後加兩條 policy（public `select`；anon `insert`）。上載係由瀏覽器直接用 anon key 進行（Supabase 標準做法，受 storage policy 管控）。
+`food-images` bucket 由 schema.sql 自動建立。如果想手動建立：Dashboard → **Storage → New bucket**，名稱 `food-images`，剔選 **Public bucket**，然後加兩條 policy（public `select`；anon `insert`）。上載由瀏覽器 POST 去 `/api/t/<token>/upload`，再由伺服器用 service role 寫入 bucket（路徑 `<tenant.id>/<uuid>.<ext>`，只收圖片、上限 4 MB），瀏覽器唔再直接用 anon key 上傳。
 
 ## 3. fal.ai 設定
 

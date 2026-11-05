@@ -52,6 +52,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { restaurantName, backgroundId, styleId, restaurantId, items } = parsed.data;
 
+    // 背景要係本租戶白名單內；唔係就當搵唔到（租戶 A 唔可以用租戶 B 嘅背景）
+    if (!tenant.backgrounds.includes(backgroundId)) return notFoundResponse();
+
     // 喺花錢叫 fal 之前先驗證擁有權：跨租戶資源一律 404
     const supabase = getSupabaseServerClient();
     const owned = await resolveOwnedTargets(supabase, tenant.id, { restaurantId });

@@ -122,13 +122,13 @@ describe("POST /api/t/[token]/upload", () => {
     expect(uploads).toHaveLength(0);
   });
 
-  it("超過 10MB → 400", async () => {
+  it("超過 4MB → 400", async () => {
     const res = await POST(
       reqWith(formOf(png(MAX_UPLOAD_BYTES + 1))),
       ctx({ token: A.token })
     );
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/10/);
+    expect((await res.json()).error).toMatch(/4 MB/);
     expect(uploads).toHaveLength(0);
   });
 

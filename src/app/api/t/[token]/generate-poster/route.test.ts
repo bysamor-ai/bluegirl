@@ -15,8 +15,8 @@ vi.mock("@/lib/tenant/resolve", () => ({ getTenantByToken: (t: string) => getTen
 
 import { POST } from "./route";
 
-const A = { id: "tenant-a", token: "aaaaaaaaaaaa" };
-const B = { id: "tenant-b", token: "bbbbbbbbbbbb" };
+const A = { id: "tenant-a", token: "aaaaaaaaaaaa", backgrounds: ["gold-portrait", "white-portrait"] };
+const B = { id: "tenant-b", token: "bbbbbbbbbbbb", backgrounds: ["gold-landscape"] };
 const R_A = "11111111-1111-4111-8111-111111111111";
 const R_B = "22222222-2222-4222-8222-222222222222";
 
@@ -137,6 +137,11 @@ describe("fal.ai", () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500 })));
     const res = await POST(req(base), ctx({ token: A.token }));
     expect(res.status).toBe(502);
+    const text = JSON.stringify(await res.json());
+    expect(text).not.toContain("background");
+    expect(text).not.toContain("/backgrounds/");
+    expect(text).not.toContain("500");
+    expect(console.error).toHaveBeenCalled();
   });
 
   it("fal 冇回圖 → 502", async () => {
@@ -147,5 +152,28 @@ describe("fal.ai", () => {
   it("generated_images 寫入失敗唔影響結果", async () => {
     fake.failures.add("generated_images");
     expect((await POST(req(base), ctx({ token: A.token }))).status).toBe(200);
+    expect(console.warn).toHaveBeenCalled();
+  });
+});
+
+describe("背景白名單", () => {
+  it("backgroundId 唔喺本租戶 backgrounds → 404，唔叫 fal，唔查 DB，唔寫入", async () => {
+    // gold-landscape 屬於租戶 B，A 唔可以用
+    const res = await POST(req({ ...base, backgroundId: "gold-landscape" }), ctx({ token: A.token }));
+    expect(res.status).toBe(404);
+    expect(fal.subscribe).not.toHaveBeenCalled();
+    expect(fal.upload).not.toHaveBeenCalled();
+    expect(inserts()).toHaveLength(0);
+  });
+
+  it("同一個背景對 B 可用、對 A 唔可用", async () => {
+    const body = { ...base, backgroundId: "gold-landscape" };
+    expect((await POST(req(body), ctx({ token: B.token }))).status).toBe(200);
+    expect((await POST(req(body), ctx({ token: A.token }))).status).toBe(404);
+  });
+
+  it("白名單內嘅背景 → 成功", async () => {
+    const res = await POST(req({ ...base, backgroundId: "white-portrait" }), ctx({ token: A.token }));
+    expect(res.status).toBe(200);
   });
 });
