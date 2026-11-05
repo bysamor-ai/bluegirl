@@ -6,6 +6,7 @@ import MockupCanvas from "./MockupCanvas";
 import PhotoMarker from "./PhotoMarker";
 import QuoteCard from "./QuoteCard";
 import SpecForm from "./SpecForm";
+import { tenantRefineMockupApiPath } from "@/lib/tenant/paths";
 import { calculateQuote, type LengthUnit } from "@/lib/wall-sticker/pricing";
 import { fileToDataUrl } from "@/lib/wall-sticker/render";
 import {
@@ -16,7 +17,12 @@ import {
 } from "@/lib/wall-sticker/types";
 
 /** 牆貼報價工作台：上載相 → 框選貼位 → 入尺寸 → 出報價同 mockup */
-export default function WallStickerStudio() {
+export default function WallStickerStudio({
+  token,
+}: {
+  /** 租戶 token，用嚟砌 AI 生成／精修嘅 API 路徑 */
+  token: string;
+}) {
   const [photoSrc, setPhotoSrc] = useState<string | null>(null);
   const [natural, setNatural] = useState({ w: 1200, h: 800 });
   const [quad, setQuad] = useState<Quad>(DEFAULT_QUAD);
@@ -74,7 +80,7 @@ export default function WallStickerStudio() {
     setRefineError(null);
     setRefinedSrc(null);
     try {
-      const res = await fetch("/api/refine-mockup", {
+      const res = await fetch(tenantRefineMockupApiPath(token), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mockupDataUrl: mockup }),
@@ -191,6 +197,7 @@ export default function WallStickerStudio() {
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h2 className="mb-3 text-base font-semibold">③ 牆貼設計稿</h2>
         <DesignPicker
+          token={token}
           designSrc={designSrc}
           aspectRatio={aspectRatio}
           onDesignChange={setDesignSrc}

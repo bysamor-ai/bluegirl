@@ -29,7 +29,7 @@ export default async function WallStickerPage({
           喺商戶度影低要貼嘅位置，框出範圍再入闊高，即刻有生產報價同貼落現場嘅效果圖。
         </p>
       </header>
-      <WallStickerStudio />
+      <WallStickerStudio token={tenant.token} />
     </div>
   );
 }

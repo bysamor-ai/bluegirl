@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
 import { backgrounds, backgroundIds } from "@/lib/backgrounds";
-import { tenantMenuPath, tenantRestaurantsApiPath } from "@/lib/tenant/paths";
+import {
+  tenantGenerateImageApiPath,
+  tenantGeneratePosterApiPath,
+  tenantMenuPath,
+  tenantRestaurantsApiPath,
+} from "@/lib/tenant/paths";
 import MenuItemRow from "./MenuItemRow";
 
 /** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
@@ -13,7 +18,7 @@ export default function MenuForm({
   token,
 }: {
   /**
-   * 租戶 token。用嚟砌儲存後嘅導航路徑，同儲存用嘅 API 路徑（/api/t/<token>/restaurants）。
+   * 租戶 token。用嚟砌儲存後嘅導航路徑，同儲存、上傳、AI 生成用嘅 API 路徑（/api/t/<token>/...）。
    */
   token: string;
 }) {
@@ -55,7 +60,7 @@ export default function MenuForm({
     setGenerateError(null);
     setGeneratingIndex(index);
     try {
-      const response = await fetch("/api/generate-image", {
+      const response = await fetch(tenantGenerateImageApiPath(token), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,7 +105,7 @@ export default function MenuForm({
     setPosterError(null);
     setPosterGenerating(true);
     try {
-      const response = await fetch("/api/generate-poster", {
+      const response = await fetch(tenantGeneratePosterApiPath(token), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { tenantGenerateStickerDesignApiPath } from "@/lib/tenant/paths";
 import { fileToDataUrl } from "@/lib/wall-sticker/render";
 import {
   STICKER_STYLES,
@@ -8,6 +9,8 @@ import {
 } from "@/lib/wall-sticker/stickerStyles";
 
 interface Props {
+  /** 租戶 token，用嚟砌 API 路徑 */
+  token: string;
   designSrc: string | null;
   /** 貼位長寬比（闊 ÷ 高），用嚟叫 AI 出啱比例嘅設計稿 */
   aspectRatio: number;
@@ -16,6 +19,7 @@ interface Props {
 
 /** 設計稿來源：AI 生成 Blue Girl 風格底圖，或者上載現成 artwork */
 export default function DesignPicker({
+  token,
   designSrc,
   aspectRatio,
   onDesignChange,
@@ -39,7 +43,7 @@ export default function DesignPicker({
     setGenerating(true);
     setError(null);
     try {
-      const res = await fetch("/api/generate-sticker-design", {
+      const res = await fetch(tenantGenerateStickerDesignApiPath(token), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

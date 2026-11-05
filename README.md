@@ -10,7 +10,7 @@
 - 貨幣：港幣（HKD）格式
 - 4 個主題：經典傳統／簡約現代／尊貴深色／大膽促銷（config 喺 [src/lib/themes.ts](src/lib/themes.ts)，可直接修改）
 - 4 張 BLUE GIRL 品牌背景底圖（金啤橫向／金啤直向 Light／雙麥釀造橫向／雙麥釀造直向），圖片喺 `public/backgrounds/`，config 喺 [src/lib/backgrounds.ts](src/lib/backgrounds.ts)；揀咗背景後餐牌會轉用品牌版面（深藍字＋安全邊距避開品牌 footer）
-- **Gen Image 最終海報**：背景主題下面嘅按鈕，用 fal.ai `openai/gpt-image-2/edit` 以揀選咗嘅品牌背景做底，AI 合成餐廳名、菜式、價錢同已上載嘅菜式相成一張完整海報（route：[/api/generate-poster](src/app/api/generate-poster/route.ts)）
+- **Gen Image 最終海報**：背景主題下面嘅按鈕，用 fal.ai `openai/gpt-image-2/edit` 以揀選咗嘅品牌背景做底，AI 合成餐廳名、菜式、價錢同已上載嘅菜式相成一張完整海報（route：[/api/t/[token]/generate-poster](src/app/api/t/[token]/generate-poster/route.ts)）
 
 ---
 
@@ -44,7 +44,7 @@
 
 1. 去 [fal.ai](https://fal.ai) 註冊，喺 **Keys** 頁面建立 API key。
 2. 填入 `FAL_KEY` 環境變數。
-3. 圖片生成只會經 [/api/generate-image](src/app/api/generate-image/route.ts) route handler 喺伺服器進行；key 唔會出現喺客戶端 bundle。
+3. 圖片生成只會經 [/api/t/[token]/generate-image](src/app/api/t/[token]/generate-image/route.ts) route handler 喺伺服器進行；key 唔會出現喺客戶端 bundle。
 
 ## 4. 本機執行
 
@@ -74,7 +74,7 @@ npm run dev                  # http://localhost:3000
    - 建立新餐牌 → 上載／生成圖片 → 儲存 → 展示頁
 5. 之後每次 push 到 `main` 會自動重新部署。
 
-> 注意：`/api/generate-image` 設定咗 `maxDuration = 60`。Hobby plan 嘅 function 時限係 60 秒，足夠 gpt-image-1 生成一張圖。
+> 注意：`/api/t/[token]/generate-image` 設定咗 `maxDuration = 60`。Hobby plan 嘅 function 時限係 60 秒，足夠 gpt-image-1 生成一張圖。
 
 ## 6. 專案結構
 
