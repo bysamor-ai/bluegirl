@@ -61,31 +61,58 @@ export interface StickerPromptInput {
   tenantName: string;
   /** 已驗證嘅 #hex（safeBrandColor 輸出） */
   primaryColor: string;
-  /** 租戶有冇獲分配任何品牌底圖（即有冇可用嘅品牌素材） */
-  hasBrandAssets: boolean;
+  /**
+   * 租戶可唔可以出品牌標誌（由 `clients.allow_brand_marks` 決定，預設 false）。
+   * 刻意唔用「有冇海報底圖」推導：兩者係兩件唔同嘅事。
+   */
+  allowBrandMarks: boolean;
+  /** allowBrandMarks 為 true 時拼落 prompt 嘅品牌描述（`clients.brand_prompt`） */
+  brandPrompt?: string | null;
   merchantName?: string;
   highlight?: string;
 }
 
 /**
- * 牆貼設計稿 prompt。品牌由租戶決定：AI 唔識客戶嘅 logo，
- * 所以冇品牌素材嘅租戶一律明確禁止出 logo／樽／商標，唔好硬塞名。
+ * 牆貼設計稿 prompt。
+ *
+ * - `allowBrandMarks = false`（預設，所有白牌租戶）：明確禁止出 logo／樽／商標，
+ *   亦唔會提租戶名 —— AI 唔識客戶嘅 logo，硬塞個名只會產生錯嘅品牌。
+ * - `allowBrandMarks = true`：唔拼嗰句禁令，改為拼 `brandPrompt` 嘅自由文字。
+ *
+ * 文字處理分兩種：白牌一律「成張圖一個字都唔好出」；有品牌嗰邊，
+ * 品牌自己嘅 logo／wordmark 本身就係圖形，所以只排除其他文字，
+ * 唔好再同「出品牌標誌」自相矛盾。中文字兩種情況都係前端疊上去。
  */
 export function buildStickerPrompt(input: StickerPromptInput): string {
-  const { style, tenantName, primaryColor, hasBrandAssets, merchantName, highlight } = input;
+  const {
+    style,
+    tenantName,
+    primaryColor,
+    allowBrandMarks,
+    brandPrompt,
+    merchantName,
+    highlight,
+  } = input;
+  const brand = brandPrompt?.trim();
+
   return (
     `Wall decal artwork, to be printed and applied on a restaurant wall. ${style.prompt}. ` +
     `Color palette: ${primaryColor} as the dominant brand color, with white and neutral tones. ` +
-    (hasBrandAssets
-      ? `Made for the brand "${tenantName}"; keep the look consistent with that brand's color. `
+    (allowBrandMarks
+      ? `Made for the brand "${tenantName}"; keep the look consistent with that brand's color. ` +
+        (brand ? `Brand elements to feature: ${brand}. ` : "")
       : "") +
     (merchantName
       ? `Designed for a Hong Kong restaurant called "${merchantName}". `
       : "") +
     (highlight ? `Theme of the promotion: ${highlight}. ` : "") +
-    `No brand logos, no bottles, no product marks, no trademarked imagery of any kind. ` +
-    `IMPORTANT: no readable text, no lettering, no words, no captions anywhere in the image — ` +
-    `leave clear empty areas where text will be added later. ` +
+    (allowBrandMarks
+      ? `IMPORTANT: apart from the brand's own logo or wordmark, no readable text, ` +
+        `no lettering, no words, no captions anywhere in the image — ` +
+        `leave clear empty areas where text will be added later. `
+      : `No brand logos, no bottles, no product marks, no trademarked imagery of any kind. ` +
+        `IMPORTANT: no readable text, no lettering, no words, no captions anywhere in the image — ` +
+        `leave clear empty areas where text will be added later. `) +
     `Flat front-facing artwork, edge to edge composition, no mockup, no wall, no room, ` +
     `no perspective, no drop shadow, no frame, no border.`
   );

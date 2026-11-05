@@ -42,7 +42,8 @@ interface FalImageOutput {
 
 /**
  * POST /api/t/[token]/generate-sticker-design
- * 生成一張牆貼設計稿（顏色跟租戶主色，冇品牌素材嘅租戶唔會出 logo／樽）。
+ * 生成一張牆貼設計稿（顏色跟租戶主色；可唔可以出品牌標誌由
+ * `clients.allow_brand_marks` 決定，預設 false 即係完全唔出 logo／樽）。
  * 呢條 route 唔掂資料庫，只需要確認 token 有效（唔可以俾人用亂 token 白嘥 fal 額度）。
  * FAL_KEY 只存在於伺服器環境變數，唔會出現喺客戶端 bundle。
  */
@@ -75,7 +76,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       style: styleConfig,
       tenantName: tenant.name,
       primaryColor: safeBrandColor(tenant.primaryColor),
-      hasBrandAssets: tenant.backgrounds.length > 0,
+      allowBrandMarks: tenant.allowBrandMarks,
+      brandPrompt: tenant.brandPrompt,
       merchantName,
       highlight,
     });

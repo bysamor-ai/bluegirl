@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // 全部用 mock：clients 表開咗 RLS 而冇 policy，anon key 實際查唔到嘢
 const maybeSingle = vi.fn();
 const eq = vi.fn(() => ({ maybeSingle }));
-const select = vi.fn(() => ({ eq }));
+const select = vi.fn((_columns?: string) => ({ eq }));
 const from = vi.fn(() => ({ select }));
 const getSupabaseServerClient = vi.fn(() => ({ from }));
 
@@ -22,6 +22,8 @@ const row: ClientRow = {
   logo_url: "https://example.com/logo.png",
   primary_color: "#112233",
   backgrounds: ["gold-landscape", "white-portrait"],
+  allow_brand_marks: false,
+  brand_prompt: null,
   created_at: "2026-11-05T00:00:00Z",
 };
 
@@ -49,6 +51,8 @@ describe("toTenant", () => {
       logoUrl: "https://example.com/logo.png",
       primaryColor: "#112233",
       backgrounds: ["gold-landscape", "white-portrait"],
+      allowBrandMarks: false,
+      brandPrompt: null,
     });
   });
 
@@ -67,6 +71,25 @@ describe("toTenant", () => {
     const t = toTenant({ ...row, backgrounds: null as unknown as string[] });
     expect(t.backgrounds).toEqual([]);
   });
+
+  it("allow_brand_marks 唔係 true（null／undefined／舊資料列）一律當 false", () => {
+    for (const bad of [null, undefined, 0, "true"]) {
+      const t = toTenant({ ...row, allow_brand_marks: bad as unknown as boolean });
+      expect(t.allowBrandMarks).toBe(false);
+    }
+    expect(toTenant({ ...row, allow_brand_marks: true }).allowBrandMarks).toBe(true);
+  });
+
+  it("brand_prompt 淨係空白當冇設定（null）", () => {
+    expect(toTenant({ ...row, brand_prompt: "   " }).brandPrompt).toBeNull();
+    expect(toTenant({ ...row, brand_prompt: "  一隻啤酒樽  " }).brandPrompt).toBe("一隻啤酒樽");
+  });
+
+  it("有冇海報底圖唔會影響 allowBrandMarks（兩個開關互相獨立）", () => {
+    const t = toTenant({ ...row, backgrounds: ["gold-landscape"], allow_brand_marks: false });
+    expect(t.backgrounds).toHaveLength(1);
+    expect(t.allowBrandMarks).toBe(false);
+  });
 });
 
 describe("getTenantByToken", () => {
@@ -77,6 +100,9 @@ describe("getTenantByToken", () => {
     expect(t?.primaryColor).toBe("#112233");
     expect(from).toHaveBeenCalledWith("clients");
     expect(eq).toHaveBeenCalledWith("token", "abc123DEF456");
+    // 新欄位要真係 select 返嚟，否則 allowBrandMarks 永遠係 false
+    expect(select.mock.calls[0][0]).toContain("allow_brand_marks");
+    expect(select.mock.calls[0][0]).toContain("brand_prompt");
   });
 
   it("查唔到回 null", async () => {

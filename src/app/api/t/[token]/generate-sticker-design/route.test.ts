@@ -24,6 +24,25 @@ const A = {
   name: "甲餐廳",
   primaryColor: "#aa3300",
   backgrounds: [] as string[],
+  allowBrandMarks: false,
+  brandPrompt: null as string | null,
+};
+// 有海報底圖、但未獲授權出品牌標誌嘅白牌租戶（兩個開關互相獨立）
+const WITH_BG = {
+  ...A,
+  id: "tenant-bg",
+  token: "bbbbbbbbbbbb",
+  name: "乙餐廳",
+  backgrounds: ["gold-landscape"],
+};
+// 獲授權出品牌標誌嘅租戶
+const BRANDED = {
+  ...A,
+  id: "tenant-brand",
+  token: "cccccccccccc",
+  name: "丙品牌",
+  allowBrandMarks: true,
+  brandPrompt: "a navy and gold beer bottle",
 };
 const ctx = (params: unknown) => ({ params: Promise.resolve(params) }) as never;
 const req = (body?: unknown, bad = false) =>
@@ -40,7 +59,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {});
   process.env.FAL_KEY = "test-fal-key";
-  getTenantByToken.mockImplementation(async (t: string) => (t === A.token ? A : null));
+  getTenantByToken.mockImplementation(
+    async (t: string) =>
+      [A, WITH_BG, BRANDED].find((x) => x.token === t) ?? null
+  );
   fal.upload.mockResolvedValue("https://fal.media/up.jpg");
   fal.subscribe.mockResolvedValue({ data: { images: [{ url: "https://fal.media/out.png" }] } });
 });
@@ -58,6 +80,22 @@ describe("POST /api/t/[token]/generate-sticker-design", () => {
     expect(prompt).toContain("#aa3300");
     expect(prompt).toContain("No brand logos, no bottles");
     expect(prompt).not.toMatch(/blue ?girl|beer|navy|甲餐廳/i);
+  });
+
+  it("有海報底圖但 allow_brand_marks = false 嘅租戶仍然禁 logo／樽", async () => {
+    // 「有冇底圖」唔可以做「可唔可以出品牌標誌」嘅開關
+    await POST(req(ok), ctx({ token: WITH_BG.token }));
+    const prompt = fal.subscribe.mock.calls[0][1].input.prompt as string;
+    expect(prompt).toContain("No brand logos, no bottles");
+    expect(prompt).not.toContain("乙餐廳");
+  });
+
+  it("allow_brand_marks = true 嘅租戶改為拼 brand_prompt，唔再拼禁令", async () => {
+    await POST(req(ok), ctx({ token: BRANDED.token }));
+    const prompt = fal.subscribe.mock.calls[0][1].input.prompt as string;
+    expect(prompt).not.toContain("No brand logos, no bottles");
+    expect(prompt).toContain("Brand elements to feature: a navy and gold beer bottle");
+    expect(prompt).toContain('Made for the brand "丙品牌"');
   });
 
   it("token 查唔到 → 404，唔叫 fal", async () => {

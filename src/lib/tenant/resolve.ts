@@ -28,6 +28,10 @@ export function toTenant(row: ClientRow): Tenant {
     logoUrl: row.logo_url,
     primaryColor: row.primary_color,
     backgrounds: (row.backgrounds ?? []).filter(isBackgroundId),
+    // 明確比較 true：欄位係後加嘅，舊資料列可能係 null／undefined，預設唔可以解鎖
+    allowBrandMarks: row.allow_brand_marks === true,
+    // 空白字串當「冇設定」，唔好拼一段空描述落 prompt
+    brandPrompt: row.brand_prompt?.trim() ? row.brand_prompt.trim() : null,
   };
 }
 
@@ -43,7 +47,10 @@ export async function getTenantByToken(raw: string): Promise<Tenant | null> {
   const { data, error } = await retryOnColdStart<ClientRow>(async () =>
     supabase
       .from("clients")
-      .select("id, token, name, logo_text, logo_url, primary_color, backgrounds, created_at")
+      .select(
+        "id, token, name, logo_text, logo_url, primary_color, backgrounds, " +
+          "allow_brand_marks, brand_prompt, created_at"
+      )
       .eq("token", token)
       .maybeSingle()
   );

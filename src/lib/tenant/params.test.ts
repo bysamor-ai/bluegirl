@@ -29,6 +29,8 @@ const tenant: Tenant = {
   logoUrl: null,
   primaryColor: "#112233",
   backgrounds: ["gold-landscape"],
+  allowBrandMarks: false,
+  brandPrompt: null,
 };
 
 /** 模擬 runtime 真實情況：params 嘅型別未必同宣告一致 */
