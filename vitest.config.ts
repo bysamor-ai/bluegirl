@@ -2,6 +2,10 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  // tsconfig 嘅 `jsx` 係 "preserve"（交俾 Next.js 處理），esbuild 會 fallback 去
+  // classic 轉換（React.createElement）而測試環境冇 global React。
+  // server component 測試要 import .tsx 頁面，所以明確叫 esbuild 用 automatic runtime。
+  esbuild: { jsx: "automatic" },
   resolve: {
     alias: {
       // 對應 tsconfig 嘅 "@/*" -> "src/*"
