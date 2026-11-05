@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { RestaurantFormValues } from "@/lib/schemas";
-import { backgrounds, backgroundIds } from "@/lib/backgrounds";
+import { backgrounds, type BackgroundId } from "@/lib/backgrounds";
 import {
   tenantGenerateImageApiPath,
   tenantGeneratePosterApiPath,
@@ -16,11 +16,14 @@ import MenuItemRow from "./MenuItemRow";
 /** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
 export default function MenuForm({
   token,
+  allowedBackgrounds,
 }: {
   /**
    * 租戶 token。用嚟砌儲存後嘅導航路徑，同儲存、上傳、AI 生成用嘅 API 路徑（/api/t/<token>/...）。
    */
   token: string;
+  /** 租戶可用嘅背景（唔含 none；空陣列 = 只得「無背景」） */
+  allowedBackgrounds: BackgroundId[];
 }) {
   const router = useRouter();
   const {
@@ -45,6 +48,11 @@ export default function MenuForm({
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
+  // 「無背景」永遠有，其餘跟租戶
+  const backgroundOptions: BackgroundId[] = [
+    "none",
+    ...allowedBackgrounds.filter((id) => id !== "none"),
+  ];
   const selectedBackground = watch("background");
   // 海報係表單值嘅一部分：生成後隨記錄儲存，編輯舊記錄時會顯示返出嚟
   const posterUrl = watch("posterUrl");
@@ -224,14 +232,14 @@ export default function MenuForm({
         ))}
       </section>
 
-      {/* 背景主題（BLUE GIRL 品牌底圖）＋ AI 海報生成 */}
+      {/* 背景主題（品牌底圖）＋ AI 海報生成 */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
         <h2 className="mb-1 text-base font-semibold">背景主題</h2>
         <p className="mb-3 text-xs text-slate-400">
-          揀選 BLUE GIRL 品牌底圖後，餐牌會轉用品牌版面；揀「無背景」則用返上面嘅主題色
+          揀選品牌底圖後，餐牌會轉用品牌版面；揀「無背景」則用返上面嘅主題色
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {backgroundIds.map((id) => {
+          {backgroundOptions.map((id) => {
             const bg = backgrounds[id];
             return (
               <label
@@ -334,7 +342,7 @@ export default function MenuForm({
         <button
           type="submit"
           disabled={busy}
-          className="rounded-xl bg-blue-600 px-4 py-3 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-xl bg-brand px-4 py-3 text-base font-semibold text-white hover:brightness-90 disabled:opacity-50"
         >
           {saving ? "儲存中…" : "儲存餐牌"}
         </button>

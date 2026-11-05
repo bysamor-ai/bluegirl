@@ -17,7 +17,7 @@ interface Props {
   onDesignChange: (src: string | null) => void;
 }
 
-/** 設計稿來源：AI 生成 Blue Girl 風格底圖，或者上載現成 artwork */
+/** 設計稿來源：AI 生成品牌風格底圖，或者上載現成 artwork */
 export default function DesignPicker({
   token,
   designSrc,
@@ -71,7 +71,7 @@ export default function DesignPicker({
             AI 生成
           </span>
           <span className="text-sm font-medium text-slate-700">
-            即場出一張 BLUE GIRL 風格設計稿
+            即場出一張品牌風格設計稿
           </span>
         </div>
 

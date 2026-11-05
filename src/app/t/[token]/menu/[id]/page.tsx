@@ -21,23 +21,24 @@ export default async function MenuPage({
   const { id } = await params;
   const base = tenantBasePath(tenant.token);
 
-  let restaurant: RestaurantWithItems | null = null;
-  try {
-    const supabase = getSupabaseServerClient();
-    const { data } = await supabase
-      .from("restaurants")
-      .select("id, name, theme, background, poster_url, created_at, menu_items(*)")
-      .eq("id", id)
-      // service role 繞過 RLS，租戶隔離完全靠呢句
-      .eq("client_id", tenant.id)
-      .order("sort_order", { referencedTable: "menu_items", ascending: true })
-      .single();
-    restaurant = data as RestaurantWithItems | null;
-  } catch {
-    restaurant = null;
-  }
+  // 只有「查詢成功但零筆」先係 404；資料庫錯誤要拋上 error boundary（同 getTenantFromParams 一致）
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("restaurants")
+    .select("id, name, theme, background, poster_url, created_at, menu_items(*)")
+    .eq("id", id)
+    // service role 繞過 RLS，租戶隔離完全靠呢句
+    .eq("client_id", tenant.id)
+    .order("sort_order", { referencedTable: "menu_items", ascending: true })
+    .maybeSingle();
 
-  if (!restaurant) notFound();
+  // id 唔係合法 uuid（亂入網址）係用戶輸入錯，屬 404；其餘錯誤先係故障
+  if (error && error.code === "22P02") notFound();
+  if (error) {
+    throw new Error(`讀取餐牌失敗：${error.message}`);
+  }
+  if (!data) notFound();
+  const restaurant = data as RestaurantWithItems;
 
   const items = restaurant.menu_items.map((item) => ({
     name: item.name,

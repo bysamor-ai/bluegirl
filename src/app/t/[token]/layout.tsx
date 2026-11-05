@@ -1,15 +1,32 @@
+import type { CSSProperties } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import type { TenantRouteParams } from "@/lib/tenant/params";
+import { brandMark, safeBrandColor } from "@/lib/tenant/brand";
+import {
+  getTenantFromParams,
+  type TenantRouteParams,
+} from "@/lib/tenant/params";
 import {
   tenantBasePath,
   tenantNewEditorPath,
   tenantWallStickerPath,
 } from "@/lib/tenant/paths";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<TenantRouteParams>;
+}): Promise<Metadata> {
+  const tenant = await getTenantFromParams(params);
+  return { title: { default: tenant.name, template: `%s｜${tenant.name}` } };
+}
+
 /**
- * 租戶區嘅最小 layout —— 由舊 root layout 搬落嚟嘅頁首，外觀維持原狀，
- * 只係導覽連結改成帶 token。品牌白牌化（logo／主色／租戶名）係 Task 7 嘅範圍，
- * 所以呢度**冇**查租戶，亦**冇**用 tenant 嘅資料，淨係用 token 砌連結。
+ * 租戶白牌外殼：logo／名稱／主色全部跟租戶。
+ * 主色經 CSS 變數 `--brand` 落去（globals.css 對應 `bg-brand` 等 utility）。
+ *
+ * 注意：呢度只將 name／logo／顏色嘅「字串」交俾頁首，唔會將成個 tenant 物件
+ * 傳落去任何 client component（否則 token／內部 id 會序列化入 RSC payload）。
  */
 export default async function TenantLayout({
   children,
@@ -18,48 +35,52 @@ export default async function TenantLayout({
   children: React.ReactNode;
   params: Promise<TenantRouteParams>;
 }) {
-  // 呢度唔做驗證：token 唔啱嗰陣由頁面負責 notFound()，
-  // layout 淨係需要連結（唔係 string 就退返首頁）。
-  const { token } = (await params) as { token?: unknown };
-  const links =
-    typeof token === "string"
-      ? {
-          home: tenantBasePath(token),
-          newEditor: tenantNewEditorPath(token),
-          wallSticker: tenantWallStickerPath(token),
-        }
-      : { home: "/", newEditor: "/", wallSticker: "/" };
+  // 查唔到 → 404；資料庫故障 → 拋上 error boundary（唔好 catch）
+  const tenant = await getTenantFromParams(params);
+  const home = tenantBasePath(tenant.token);
+  const newEditor = tenantNewEditorPath(tenant.token);
+  const wallSticker = tenantWallStickerPath(tenant.token);
+  const mark = brandMark(tenant);
 
   return (
-    <>
+    <div
+      style={{ "--brand": safeBrandColor(tenant.primaryColor) } as CSSProperties}
+    >
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href={links.home} className="flex min-w-0 items-center gap-2">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
-              BG
-            </span>
-            {/* 手機淨顯示品牌名，避免同導覽逼到換行 */}
+          <Link href={home} className="flex min-w-0 items-center gap-2">
+            {tenant.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={tenant.logoUrl}
+                alt={tenant.name}
+                className="h-8 w-auto max-w-[8rem] shrink-0 object-contain"
+              />
+            ) : (
+              <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg bg-brand px-1.5 text-sm font-bold text-white">
+                {mark}
+              </span>
+            )}
             <span className="truncate text-base font-semibold tracking-tight sm:text-lg">
-              BLUE GIRL
-              <span className="hidden sm:inline"> 餐牌生成器</span>
+              {tenant.name}
             </span>
           </Link>
           <nav className="flex shrink-0 items-center gap-3 text-sm sm:gap-4">
             <Link
-              href={links.home}
+              href={home}
               className="whitespace-nowrap text-slate-600 hover:text-slate-900"
             >
               記錄
             </Link>
             <Link
-              href={links.wallSticker}
+              href={wallSticker}
               className="whitespace-nowrap text-slate-600 hover:text-slate-900"
             >
               牆貼報價
             </Link>
             <Link
-              href={links.newEditor}
-              className="whitespace-nowrap rounded-lg bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-700"
+              href={newEditor}
+              className="whitespace-nowrap rounded-lg bg-brand px-3 py-1.5 font-medium text-white hover:brightness-90"
             >
               <span className="hidden sm:inline">建立</span>新餐牌
             </Link>
@@ -67,6 +88,6 @@ export default async function TenantLayout({
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">{children}</main>
-    </>
+    </div>
   );
 }

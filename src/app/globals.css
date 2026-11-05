@@ -9,3 +9,8 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* 租戶主色：由 /t/[token] layout 設定 --brand，其餘地方用 bg-brand／text-brand 等 */
+@theme inline {
+  --color-brand: var(--brand, #2563eb);
+}

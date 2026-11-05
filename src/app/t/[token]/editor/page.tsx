@@ -12,5 +12,8 @@ export default async function NewEditorPage({
   // 就算呢頁唔使查資料庫，都要確認 token 有效，唔可以俾人用亂 token 入到工具
   const tenant = await getTenantFromParams(params);
 
-  return <EditorShell token={tenant.token} />;
+  return <EditorShell
+      token={tenant.token}
+      allowedBackgrounds={tenant.backgrounds}
+    />;
 }

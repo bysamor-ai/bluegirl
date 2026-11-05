@@ -21,7 +21,7 @@ export default async function WallStickerPage({
   return (
     <div className="mx-auto max-w-5xl">
       <header className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-wider text-blue-600">
+        <p className="text-xs font-medium uppercase tracking-wider text-brand">
           {tenant.name} · 現場工具
         </p>
         <h1 className="mt-1 text-xl font-bold">牆貼報價同實景效果圖</h1>

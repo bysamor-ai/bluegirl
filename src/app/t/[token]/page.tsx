@@ -56,7 +56,7 @@ export default async function TenantHomePage({
         </div>
         <Link
           href={newEditorHref}
-          className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:brightness-90"
         >
           ＋ 建立新餐牌
         </Link>

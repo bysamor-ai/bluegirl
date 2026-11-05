@@ -61,7 +61,7 @@ export default function RestaurantList({
         </p>
         <Link
           href={tenantNewEditorPath(token)}
-          className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:brightness-90"
         >
           建立新餐牌
         </Link>
