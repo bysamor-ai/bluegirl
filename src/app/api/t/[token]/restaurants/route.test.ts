@@ -83,8 +83,8 @@ vi.mock("@/lib/tenant/resolve", () => ({
 import { GET, POST } from "./route";
 import { GET as GET_ONE, DELETE } from "./[id]/route";
 
-const A = { id: "tenant-a", token: "aaaaaaaaaaaa" };
-const B = { id: "tenant-b", token: "bbbbbbbbbbbb" };
+const A = { id: "tenant-a", token: "aaaaaaaaaaaa", backgrounds: ["gold-landscape"] };
+const B = { id: "tenant-b", token: "bbbbbbbbbbbb", backgrounds: [] as string[] };
 const ID_B = "22222222-2222-4222-8222-222222222222";
 
 const ctx = (params: unknown) => ({ params: Promise.resolve(params) }) as never;
@@ -172,6 +172,25 @@ describe("POST /restaurants", () => {
     const ins = calls.find((c) => c.table === "restaurants" && c.op === "insert")!;
     expect((ins.payload as Row).client_id).toBe(A.id);
     expect(db.restaurants.filter((r) => r.client_id === B.id)).toHaveLength(1);
+  });
+
+  it("背景唔喺租戶白名單內回 404 而且冇寫入", async () => {
+    const res = await POST(
+      req({ ...validBody, background: "gold-landscape" }),
+      ctx({ token: B.token })
+    );
+    expect(res.status).toBe(404);
+    expect(calls.some((c) => c.op === "insert" || c.op === "update")).toBe(false);
+  });
+
+  it("背景喺租戶白名單內可以儲存；「無背景」永遠可用", async () => {
+    const ok = await POST(
+      req({ ...validBody, background: "gold-landscape" }),
+      ctx({ token: A.token })
+    );
+    expect(ok.status).toBe(200);
+    const none = await POST(req(validBody), ctx({ token: B.token }));
+    expect(none.status).toBe(200);
   });
 
   it("更新其他租戶嘅 id 回 404，菜式同餐廳原封不動", async () => {

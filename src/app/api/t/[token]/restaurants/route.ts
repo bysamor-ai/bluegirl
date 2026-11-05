@@ -54,8 +54,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "提交嘅資料格式不正確" }, { status: 400 });
     }
 
-    const supabase = getSupabaseServerClient();
     const { id, name, theme, background, posterUrl, items } = parsed.data;
+
+    // 背景要係本租戶白名單內（「無背景」永遠可用）；同 generate-poster 一致，唔屬於佢嘅一律 404
+    if (background !== "none" && !tenant.backgrounds.includes(background)) {
+      return notFoundResponse();
+    }
+
+    const supabase = getSupabaseServerClient();
     let restaurantId = id;
 
     if (restaurantId) {

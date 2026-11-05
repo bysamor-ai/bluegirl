@@ -18,7 +18,13 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { POST } from "./route";
 
-const A = { id: "tenant-a", token: "aaaaaaaaaaaa" };
+const A = {
+  id: "tenant-a",
+  token: "aaaaaaaaaaaa",
+  name: "甲餐廳",
+  primaryColor: "#aa3300",
+  backgrounds: [] as string[],
+};
 const ctx = (params: unknown) => ({ params: Promise.resolve(params) }) as never;
 const req = (body?: unknown, bad = false) =>
   ({
@@ -44,6 +50,14 @@ describe("POST /api/t/[token]/generate-sticker-design", () => {
     const res = await POST(req(ok), ctx({ token: A.token }));
     expect(res.status).toBe(200);
     expect((await res.json()).imageUrl).toBe("https://fal.media/out.png");
+  });
+
+  it("白牌：冇品牌底圖嘅租戶 prompt 用租戶主色、禁 logo／樽，冇舊品牌字樣", async () => {
+    await POST(req(ok), ctx({ token: A.token }));
+    const prompt = fal.subscribe.mock.calls[0][1].input.prompt as string;
+    expect(prompt).toContain("#aa3300");
+    expect(prompt).toContain("No brand logos, no bottles");
+    expect(prompt).not.toMatch(/blue ?girl|beer|navy|甲餐廳/i);
   });
 
   it("token 查唔到 → 404，唔叫 fal", async () => {

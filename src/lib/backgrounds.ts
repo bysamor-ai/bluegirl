@@ -1,5 +1,5 @@
 /**
- * BLUE GIRL 品牌背景主題 config。
+ * 品牌背景主題 config（各租戶可用邊幾張由 clients.backgrounds 決定）。
  * 圖片放喺 public/backgrounds/，可以喺呢度加減背景選項。
  * 揀咗背景圖後，餐牌會用品牌版面（深藍字＋安全邊距避開品牌 footer）。
  */

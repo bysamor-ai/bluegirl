@@ -4,9 +4,16 @@
 // 純字串嘅 URL helper 喺 ./paths，client 同 server 都用得。
 import "server-only";
 
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getTenantByToken } from "./resolve";
 import type { Tenant } from "./types";
+
+/**
+ * 同一個請求內 generateMetadata／layout／page 會各叫一次；用 React cache 按 token 去重，
+ * 只查一次 clients（冷啟動重試亦只行一次）。cache 喺 request 範圍內，唔會跨請求。
+ */
+const getTenantCached = cache((token: string) => getTenantByToken(token));
 
 /** `/t/[token]/*` 動態路由嘅 params（Next.js 15 入面係 Promise） */
 export type TenantRouteParams = { token: string };
@@ -28,7 +35,7 @@ export async function getTenantFromParams(
   const { token } = (await params) as { token?: unknown };
   if (typeof token !== "string") notFound();
 
-  const tenant = await getTenantByToken(token);
+  const tenant = await getTenantCached(token);
   if (!tenant) notFound();
 
   return tenant;

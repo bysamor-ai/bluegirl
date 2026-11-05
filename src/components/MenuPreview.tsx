@@ -5,7 +5,7 @@ import { formatHKD } from "@/lib/format";
 /**
  * 餐牌預覽 — 純展示元件（無 hooks），
  * 編輯器即時預覽同 /menu/[id] 展示頁共用。
- * 揀咗 BLUE GIRL 品牌背景時會用品牌版面；否則用主題色版面。
+ * 揀咗品牌背景時會用品牌版面；否則用主題色版面。
  */
 
 export interface PreviewItem {
@@ -51,7 +51,7 @@ function ItemImage({
   );
 }
 
-/** BLUE GIRL 品牌背景版面：深藍字 + 半透明白底行，避開品牌 footer 安全區 */
+/** 品牌背景版面：深藍字 + 半透明白底行，避開品牌 footer 安全區 */
 function BrandedMenu({
   name,
   backgroundId,

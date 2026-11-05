@@ -179,7 +179,7 @@ export default function MenuForm({
         </label>
         <input
           type="text"
-          placeholder="例如：藍妹茶餐廳"
+          placeholder="例如：貳號茶餐廳"
           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
           {...register("name")}
         />

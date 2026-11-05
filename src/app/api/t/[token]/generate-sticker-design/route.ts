@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { fal } from "@fal-ai/client";
 import { z } from "zod";
 import { resolveTenant, serverErrorResponse } from "@/lib/tenant/api";
+import { safeBrandColor } from "@/lib/tenant/brand";
 import {
+  buildStickerPrompt,
   getStickerStyle,
   pickImageSize,
 } from "@/lib/wall-sticker/stickerStyles";
@@ -40,7 +42,7 @@ interface FalImageOutput {
 
 /**
  * POST /api/t/[token]/generate-sticker-design
- * 生成一張 BLUE GIRL 品牌風格嘅牆貼設計稿。
+ * 生成一張牆貼設計稿（顏色跟租戶主色，冇品牌素材嘅租戶唔會出 logo／樽）。
  * 呢條 route 唔掂資料庫，只需要確認 token 有效（唔可以俾人用亂 token 白嘥 fal 額度）。
  * FAL_KEY 只存在於伺服器環境變數，唔會出現喺客戶端 bundle。
  */
@@ -48,6 +50,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const resolved = await resolveTenant(context.params);
     if ("response" in resolved) return resolved.response;
+    const { tenant } = resolved;
 
     let raw: unknown;
     try {
@@ -68,19 +71,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const styleConfig = getStickerStyle(style);
 
     // 英文 prompt 出圖較穩定；中文字交由前端疊字，所以明確叫佢唔好出文字。
-    const prompt =
-      `Wall decal artwork for BLUE GIRL imported premium beer, to be printed and ` +
-      `applied on a restaurant wall. ${styleConfig.prompt}. ` +
-      `Brand palette: deep navy blue (#12204a), metallic gold (#c9a24b), clean white. ` +
-      (merchantName
-        ? `Designed for a Hong Kong restaurant called "${merchantName}". `
-        : "") +
-      (highlight ? `Theme of the promotion: ${highlight}. ` : "") +
-      `Include the BLUE GIRL beer bottle and brand mark as a graphic element. ` +
-      `IMPORTANT: no readable text, no lettering, no words, no captions anywhere in the image — ` +
-      `leave clear empty areas where text will be added later. ` +
-      `Flat front-facing artwork, edge to edge composition, no mockup, no wall, no room, ` +
-      `no perspective, no drop shadow, no frame, no border.`;
+    const prompt = buildStickerPrompt({
+      style: styleConfig,
+      tenantName: tenant.name,
+      primaryColor: safeBrandColor(tenant.primaryColor),
+      hasBrandAssets: tenant.backgrounds.length > 0,
+      merchantName,
+      highlight,
+    });
 
     let imageUrl: string | undefined;
     try {

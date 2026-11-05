@@ -27,7 +27,7 @@ interface FalImageOutput {
 
 /**
  * POST /api/t/[token]/generate-poster
- * 用使用者揀選嘅 BLUE GIRL 品牌背景做底，交俾 gpt-image-2/edit
+ * 用使用者揀選嘅品牌背景做底，交俾 gpt-image-2/edit
  * 合成完整餐牌海報（餐廳名 + 菜式 + 價錢 + 已上載嘅菜式相）。
  * FAL_KEY 只存在於伺服器環境變數。
  */
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const prompt =
       `Design a professional restaurant menu poster.\n` +
-      `Image 1 is the official BLUE GIRL beer poster background template — use it as the EXACT ` +
+      `Image 1 is the official brand poster background template — use it as the EXACT ` +
       `canvas: keep its colors, logos, bottle artwork and bottom brand footer completely unchanged, ` +
       `and design all menu content within its empty area.\n` +
       `Image 2 is a DESIGN STYLE reference only — imitate its layout language, composition, ` +
