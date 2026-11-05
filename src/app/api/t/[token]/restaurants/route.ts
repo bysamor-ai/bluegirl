@@ -49,10 +49,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // client_id 只會用 tenant.id，永不讀 body。
     const parsed = restaurantFormSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.errors[0]?.message ?? "資料驗證失敗" },
-        { status: 400 }
-      );
+      // 唔回 zod 原始訊息：預設係英文（"Invalid uuid"、"Required"），亦會帶出內部欄位。
+      // 表單端已有逐欄中文驗證，呢度只做 server 防線，回固定繁中訊息。
+      return NextResponse.json({ error: "提交嘅資料格式不正確" }, { status: 400 });
     }
 
     const supabase = getSupabaseServerClient();

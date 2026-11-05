@@ -19,8 +19,7 @@ export default function RestaurantList({
 }: {
   restaurants: RestaurantRow[];
   /**
-   * 租戶 token。而家用嚟砌租戶內嘅連結；
-   * Task 4／5 之後刪除用嘅 API 路徑亦會改成帶 token。
+   * 租戶 token。用嚟砌租戶內嘅連結，同刪除用嘅 API 路徑（/api/t/<token>/restaurants/<id>）。
    */
   token: string;
 }) {

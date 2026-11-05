@@ -13,8 +13,7 @@ export default function MenuForm({
   token,
 }: {
   /**
-   * 租戶 token。而家用嚟砌儲存後嘅導航路徑；
-   * Task 4／5 之後 API 路徑亦會改成帶 token（例如 /api/t/<token>/restaurants）。
+   * 租戶 token。用嚟砌儲存後嘅導航路徑，同儲存用嘅 API 路徑（/api/t/<token>/restaurants）。
    */
   token: string;
 }) {

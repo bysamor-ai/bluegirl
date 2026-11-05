@@ -6,6 +6,7 @@ type Row = Record<string, unknown>;
 const db: Record<string, Row[]> = {};
 const calls: { table: string; op: string; payload?: unknown; filters: [string, unknown][] }[] = [];
 let failTable: string | null = null;
+let failCode: string | undefined;
 let idSeq = 0;
 
 function builder(table: string) {
@@ -14,14 +15,24 @@ function builder(table: string) {
   const filters: [string, unknown][] = [];
   let returning = false;
   let single: "single" | "maybe" | null = null;
+  let embedItems = false;
 
   const run = () => {
     calls.push({ table, op, payload, filters: [...filters] });
-    if (failTable === table) return { data: null, error: { message: "SECRET_DB_DETAIL" } };
+    if (failTable === table) return { data: null, error: { message: "SECRET_DB_DETAIL", code: failCode } };
     const matches = (r: Row) => filters.every(([k, v]) => r[k] === v);
     const rows = db[table] ?? (db[table] = []);
     let out: Row[] = [];
-    if (op === "select") out = rows.filter(matches);
+    if (op === "select") {
+      out = rows.filter(matches);
+      // 模擬 PostgREST embed：菜式只會跟住已被過濾嘅 parent 出
+      if (embedItems) {
+        out = out.map((r) => ({
+          ...r,
+          menu_items: (db.menu_items ?? []).filter((m) => m.restaurant_id === r.id),
+        }));
+      }
+    }
     if (op === "insert") {
       const list = (Array.isArray(payload) ? payload : [payload]) as Row[];
       out = list.map((r) => ({ id: `new-${++idSeq}`, ...r }));
@@ -42,7 +53,11 @@ function builder(table: string) {
   };
 
   const b: Record<string, unknown> = {
-    select: () => { if (op !== "select") returning = true; return b; },
+    select: (cols?: string) => {
+      if (op !== "select") returning = true;
+      if (typeof cols === "string" && cols.includes("menu_items(*)")) embedItems = true;
+      return b;
+    },
     insert: (p: unknown) => { op = "insert"; payload = p; return b; },
     update: (p: unknown) => { op = "update"; payload = p; return b; },
     delete: () => { op = "delete"; return b; },
@@ -89,6 +104,7 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   calls.length = 0;
   failTable = null;
+  failCode = undefined;
   idSeq = 0;
   for (const k of Object.keys(db)) delete db[k];
   db.restaurants = [
@@ -189,9 +205,16 @@ describe("POST /restaurants", () => {
     expect(db.menu_items.find((m) => m.id === "ib")).toBeDefined();
   });
 
-  it("body 格式錯回 400", async () => {
-    const res = await POST(req({ name: "" }), ctx({ token: A.token }));
+  it.each([
+    [{ name: "" }],
+    [{ ...validBody, id: "not-a-uuid" }],
+    [{ name: "x", theme: "classic", background: "none", posterUrl: "" }],
+  ])("body 格式錯回 400 + 固定繁中訊息（唔洩露 zod 英文／欄位名）", async (bad) => {
+    const res = await POST(req(bad), ctx({ token: A.token }));
     expect(res.status).toBe(400);
+    const { error } = await res.json();
+    expect(error).toBe("提交嘅資料格式不正確");
+    expect(error).not.toMatch(/Invalid|Required|items|uuid/);
   });
 
   it("DB 錯誤回通用 500，唔洩露細節", async () => {
@@ -206,7 +229,9 @@ describe("GET /restaurants/[id]", () => {
   it("自己嘅記錄回 200", async () => {
     const res = await GET_ONE(req(), ctx({ token: A.token, id: "ra" }));
     expect(res.status).toBe(200);
-    expect((await res.json()).restaurant.id).toBe("ra");
+    const { restaurant } = await res.json();
+    expect(restaurant.id).toBe("ra");
+    expect(restaurant.menu_items.map((m: Row) => m.id)).toEqual(["ia"]);
   });
 
   it("唔屬於該租戶回 404（唔係 403）", async () => {
@@ -214,6 +239,23 @@ describe("GET /restaurants/[id]", () => {
     expect(res.status).toBe(404);
     const q = calls.find((c) => c.table === "restaurants")!;
     expect(q.filters).toContainEqual(["client_id", A.id]);
+    // 連菜式都唔可以漏出去
+    expect(JSON.stringify(await res.json())).not.toContain("B 菜");
+  });
+
+  it("非 uuid 格式嘅 id（Postgres 22P02）回 404", async () => {
+    failTable = "restaurants";
+    failCode = "22P02";
+    const res = await GET_ONE(req(), ctx({ token: A.token, id: "not-a-uuid" }));
+    expect(res.status).toBe(404);
+  });
+
+  it("其他 DB 錯誤回 500", async () => {
+    failTable = "restaurants";
+    failCode = "XX000";
+    const res = await GET_ONE(req(), ctx({ token: A.token, id: "ra" }));
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(await res.json())).not.toContain("SECRET_DB_DETAIL");
   });
 });
 
@@ -229,6 +271,13 @@ describe("DELETE /restaurants/[id]", () => {
     const res = await DELETE(req(), ctx({ token: A.token, id: "ra" }));
     expect(res.status).toBe(200);
     expect(db.restaurants.map((r) => r.id)).toEqual([ID_B]);
+  });
+
+  it("非 uuid 格式嘅 id（Postgres 22P02）回 404", async () => {
+    failTable = "restaurants";
+    failCode = "22P02";
+    const res = await DELETE(req(), ctx({ token: A.token, id: "not-a-uuid" }));
+    expect(res.status).toBe(404);
   });
 
   it("DB 錯誤回通用 500", async () => {
