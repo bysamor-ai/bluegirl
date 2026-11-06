@@ -5,6 +5,10 @@ function supabaseHostname(): string {
   try {
     return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
   } catch {
+    console.warn(
+      "[next.config] NEXT_PUBLIC_SUPABASE_URL 未設定：remotePatterns 退回 **.supabase.co，" +
+        "而 runtime 嘅 Supabase 圖會退回原生 <img>（冇節省 egress）。",
+    );
     return "**.supabase.co";
   }
 }

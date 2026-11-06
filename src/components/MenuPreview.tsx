@@ -20,16 +20,20 @@ interface MenuPreviewProps {
   theme: ThemeId;
   background?: BackgroundId;
   items: PreviewItem[];
+  /** 展示／列印頁設 true：圖片 eager 載入，避免列印時屏幕外嘅圖未載入。編輯預覽維持 lazy */
+  eager?: boolean;
 }
 
 function ItemImage({
   item,
   frameClass,
   placeholderClass,
+  eager,
 }: {
   item: PreviewItem;
   frameClass: string;
   placeholderClass: string;
+  eager?: boolean;
 }) {
   return (
     <div className={`relative ${frameClass}`}>
@@ -38,6 +42,7 @@ function ItemImage({
           src={item.imageUrl}
           alt={item.name || "菜式相片"}
           fill
+          loading={eager ? "eager" : "lazy"}
           sizes="(min-width: 768px) 240px, 40vw"
           className="h-full w-full object-cover"
         />
@@ -58,10 +63,12 @@ function BrandedMenu({
   name,
   backgroundId,
   items,
+  eager,
 }: {
   name: string;
   backgroundId: BackgroundId;
   items: PreviewItem[];
+  eager?: boolean;
 }) {
   const bg = getBackground(backgroundId);
   const navy = "text-[#1e2a63]";
@@ -78,6 +85,7 @@ function BrandedMenu({
           alt=""
           aria-hidden
           fill
+          loading={eager ? "eager" : "lazy"}
           sizes="(min-width: 768px) 768px, 100vw"
           className="absolute inset-0 h-full w-full object-cover object-bottom"
         />
@@ -123,6 +131,7 @@ function BrandedMenu({
               >
                 <ItemImage
                   item={item}
+                  eager={eager}
                   frameClass="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#1e2a63]/30"
                   placeholderClass="bg-[#1e2a63]/10 text-base"
                 />
@@ -146,13 +155,19 @@ export default function MenuPreview({
   theme,
   background = "none",
   items,
+  eager = false,
 }: MenuPreviewProps) {
   const validItems = items.filter((item) => item.name.trim() !== "");
 
   // 揀咗品牌背景 → 品牌版面優先
   if (background !== "none") {
     return (
-      <BrandedMenu name={name} backgroundId={background} items={validItems} />
+      <BrandedMenu
+        name={name}
+        backgroundId={background}
+        items={validItems}
+        eager={eager}
+      />
     );
   }
 
@@ -176,6 +191,7 @@ export default function MenuPreview({
             <li key={index} className={t.itemCard}>
               <ItemImage
                 item={item}
+                eager={eager}
                 frameClass={t.imageFrame}
                 placeholderClass={t.imagePlaceholder}
               />
@@ -190,6 +206,7 @@ export default function MenuPreview({
             <li key={index} className={t.itemCard}>
               <ItemImage
                 item={item}
+                eager={eager}
                 frameClass={t.imageFrame}
                 placeholderClass={t.imagePlaceholder}
               />

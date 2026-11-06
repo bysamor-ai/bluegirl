@@ -82,6 +82,7 @@ export default async function MenuPage({
           height={1536}
           sizes="(min-width: 768px) 768px, 100vw"
           quality={90}
+          priority
           className="h-auto w-full rounded-xl border border-slate-200 shadow-sm"
         />
       ) : (
@@ -96,6 +97,7 @@ export default async function MenuPage({
               : "none"
           }
           items={items}
+          eager
         />
       )}
     </div>

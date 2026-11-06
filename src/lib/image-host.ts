@@ -7,14 +7,30 @@
  */
 const SUPABASE_PUBLIC_PATH = "/storage/v1/object/public/";
 
+let warned = false;
+function warnOnce() {
+  if (warned) return;
+  warned = true;
+  console.warn(
+    "[image-host] NEXT_PUBLIC_SUPABASE_URL 未設定或格式錯誤：Supabase 圖片會退回原生 <img>，" +
+      "冇經 Vercel CDN，egress 唔會減少。",
+  );
+}
+
 function supabaseHost(): string | null {
   const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!raw) return null;
   try {
-    return new URL(raw).hostname;
+    if (raw) return new URL(raw).hostname;
   } catch {
-    return null;
+    // 落到下面 warn
   }
+  warnOnce();
+  return null;
+}
+
+/** 只供測試：重設 warn 一次嘅旗標 */
+export function __resetWarnedForTests() {
+  warned = false;
 }
 
 export function canOptimizeImage(src: string): boolean {
