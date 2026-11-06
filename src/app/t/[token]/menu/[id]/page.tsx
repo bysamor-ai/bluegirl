@@ -8,6 +8,7 @@ import { getTenantFromParams, type TenantRouteParams } from "@/lib/tenant/params
 import { tenantBasePath, tenantEditorPath } from "@/lib/tenant/paths";
 import type { BackgroundId } from "@/lib/backgrounds";
 import type { RestaurantWithItems } from "@/lib/types";
+import SmartImage from "@/components/SmartImage";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "餐牌展示" };
@@ -74,11 +75,14 @@ export default async function MenuPage({
 
       {restaurant.poster_url ? (
         // 有 AI 生成嘅最終海報 → 直接展示張海報
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <SmartImage
           src={restaurant.poster_url}
           alt={`${restaurant.name} 餐牌海報`}
-          className="w-full rounded-xl border border-slate-200 shadow-sm"
+          width={1024}
+          height={1536}
+          sizes="(min-width: 768px) 768px, 100vw"
+          quality={90}
+          className="h-auto w-full rounded-xl border border-slate-200 shadow-sm"
         />
       ) : (
         <MenuPreview

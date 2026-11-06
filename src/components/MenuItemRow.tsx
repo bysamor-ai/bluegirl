@@ -6,6 +6,7 @@ import type { RestaurantFormValues } from "@/lib/schemas";
 import { prepareImageForUpload } from "@/lib/image-resize";
 import { tenantUploadApiPath } from "@/lib/tenant/paths";
 import { validateUpload } from "@/lib/tenant/upload-validation";
+import SmartImage from "@/components/SmartImage";
 
 interface MenuItemRowProps {
   /** 租戶 token，用嚟砌上傳 API 路徑 `/api/t/<token>/upload` */
@@ -89,12 +90,13 @@ export default function MenuItemRow({
       <div className="flex flex-col gap-4 sm:flex-row">
         {/* 相片區 */}
         <div className="flex shrink-0 flex-col items-center gap-2">
-          <div className="h-24 w-24 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+          <div className="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
             {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <SmartImage
                 src={imageUrl}
                 alt="菜式相片"
+                fill
+                sizes="96px"
                 className="h-full w-full object-cover"
               />
             ) : (

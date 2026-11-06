@@ -1,6 +1,7 @@
 import { getTheme, type ThemeId } from "@/lib/themes";
 import { getBackground, type BackgroundId } from "@/lib/backgrounds";
 import { formatHKD } from "@/lib/format";
+import SmartImage from "@/components/SmartImage";
 
 /**
  * 餐牌預覽 — 純展示元件（無 hooks），
@@ -31,12 +32,13 @@ function ItemImage({
   placeholderClass: string;
 }) {
   return (
-    <div className={frameClass}>
+    <div className={`relative ${frameClass}`}>
       {item.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <SmartImage
           src={item.imageUrl}
           alt={item.name || "菜式相片"}
+          fill
+          sizes="(min-width: 768px) 240px, 40vw"
           className="h-full w-full object-cover"
         />
       ) : (
@@ -71,11 +73,12 @@ function BrandedMenu({
     // 背景圖 absolute + object-bottom，品牌 footer 永遠貼住底部
     <div className="relative grid overflow-hidden rounded-xl border border-slate-200 shadow-sm">
       {bg.src && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <SmartImage
           src={bg.src}
           alt=""
           aria-hidden
+          fill
+          sizes="(min-width: 768px) 768px, 100vw"
           className="absolute inset-0 h-full w-full object-cover object-bottom"
         />
       )}

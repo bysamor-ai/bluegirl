@@ -11,6 +11,7 @@ import {
   tenantNewEditorPath,
   tenantRestaurantApiPath,
 } from "@/lib/tenant/paths";
+import SmartImage from "@/components/SmartImage";
 
 /** 已儲存記錄清單（客戶端處理刪除，optimistic 移除） */
 export default function RestaurantList({
@@ -85,10 +86,11 @@ export default function RestaurantList({
           >
             {row.poster_url ? (
               // 有最終海報 → 顯示海報縮圖
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <SmartImage
                 src={row.poster_url}
                 alt={`${row.name} 海報縮圖`}
+                width={56}
+                height={56}
                 className="h-14 w-14 shrink-0 rounded-lg border border-slate-200 object-cover object-top"
               />
             ) : (

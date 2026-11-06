@@ -60,7 +60,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const supabase = getSupabaseServerClient();
     const { error } = await supabase.storage
       .from(FOOD_IMAGES_BUCKET)
-      .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: false });
+      // 檔名係隨機 UUID 兼 upsert:false（永不覆寫），同一 URL 內容永遠唔變，
+      // 所以可以安全設一年長 cache，令 Vercel CDN／瀏覽器唔使再向 Supabase 取圖。
+      .upload(path, await file.arrayBuffer(), {
+        contentType: file.type,
+        upsert: false,
+        cacheControl: "31536000",
+      });
     if (error) throw error;
 
     const { data } = supabase.storage.from(FOOD_IMAGES_BUCKET).getPublicUrl(path);

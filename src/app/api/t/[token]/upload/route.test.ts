@@ -64,7 +64,11 @@ describe("POST /api/t/[token]/upload", () => {
     expect(uploads[0].bucket).toBe("food-images");
     expect(uploads[0].path).toMatch(/^tenant-a\/[0-9a-f-]{36}\.png$/);
     expect(uploads[0].size).toBe(100);
-    expect(uploads[0].opts).toMatchObject({ contentType: "image/png", upsert: false });
+    expect(uploads[0].opts).toMatchObject({
+      contentType: "image/png",
+      upsert: false,
+      cacheControl: "31536000",
+    });
     expect(url).toBe(`https://storage.example/food-images/${uploads[0].path}`);
   });
 

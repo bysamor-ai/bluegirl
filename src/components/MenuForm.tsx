@@ -12,6 +12,7 @@ import {
   tenantRestaurantsApiPath,
 } from "@/lib/tenant/paths";
 import MenuItemRow from "./MenuItemRow";
+import SmartImage from "@/components/SmartImage";
 
 /** 主表單：餐廳資料 + 動態菜式列表 + 背景主題 + AI 海報生成 + 儲存 */
 export default function MenuForm({
@@ -253,12 +254,15 @@ export default function MenuForm({
                   {...register("background")}
                 />
                 {bg.src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={bg.src}
-                    alt={bg.label}
-                    className="h-16 w-full rounded object-cover"
-                  />
+                  <span className="relative block h-16 w-full overflow-hidden rounded">
+                    <SmartImage
+                      src={bg.src}
+                      alt={bg.label}
+                      fill
+                      sizes="160px"
+                      className="object-cover"
+                    />
+                  </span>
                 ) : (
                   <span className="flex h-16 w-full items-center justify-center rounded bg-slate-100 text-slate-400">
                     無背景
@@ -302,11 +306,14 @@ export default function MenuForm({
               <p className="text-xs font-medium text-slate-500">
                 最終海報（撳「儲存餐牌」會一併儲存落記錄）
               </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SmartImage
                 src={posterUrl}
                 alt="AI 生成嘅最終海報"
-                className="w-full rounded-lg border border-slate-200"
+                width={1024}
+                height={1536}
+                sizes="(min-width: 768px) 512px, 100vw"
+                quality={90}
+                className="h-auto w-full rounded-lg border border-slate-200"
               />
               <div className="flex items-center justify-center gap-4 text-xs">
                 <a

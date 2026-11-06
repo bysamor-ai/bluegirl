@@ -15,6 +15,7 @@ import {
   type Obstruction,
   type Quad,
 } from "@/lib/wall-sticker/types";
+import SmartImage from "@/components/SmartImage";
 
 /** 牆貼報價工作台：上載相 → 框選貼位 → 入尺寸 → 出報價同 mockup */
 export default function WallStickerStudio({
@@ -263,11 +264,14 @@ export default function WallStickerStudio({
               <p className="mb-2 text-xs font-medium text-slate-500">
                 AI 精修版本
               </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SmartImage
                 src={refinedSrc}
                 alt="AI 精修後嘅實景效果圖"
-                className="w-full rounded-xl border border-slate-200"
+                width={1024}
+                height={1024}
+                sizes="(min-width: 1024px) 640px, 100vw"
+                quality={90}
+                className="h-auto w-full rounded-xl border border-slate-200"
               />
               <a
                 href={refinedSrc}
